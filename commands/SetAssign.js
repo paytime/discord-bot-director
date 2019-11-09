@@ -4,7 +4,7 @@ const file = './list.json';
 module.exports = {
     name: 'let',
     description: "Gives (or removes) a role the permission to assign specific roles to other users.\nSyntax: `@bot Let <Assigner_Role> [Not] Set <Other_Role_1> [<Other_Role_2 ...]`\n**ADMINS ONLY**",
-    execute (msg, args, list) {
+    execute(msg, args, list) {
         if (!msg.member.hasPermission('ADMINISTRATOR')) {
             throw new Error('User is not an admin.');
         }
@@ -91,7 +91,7 @@ module.exports = {
                     listAssigner.assignableRoles.push(role);
                 }
             }
-        } else if (!isRemovingRoles)  { // Assigner role isn't in the list yet. Also, can't remove roles from an assigner, if the assigner doesn't exist.
+        } else if (!isRemovingRoles) { // Assigner role isn't in the list yet. Also, can't remove roles from an assigner, if the assigner doesn't exist.
             list.push({
                 assigner: assigner.id,
                 assignableRoles: assignableRoles
