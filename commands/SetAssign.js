@@ -98,8 +98,6 @@ module.exports = {
             });
         } else return false; // If neither of these apply then just quit here
 
-        console.log(list);
-
         // Update the list file to reflect the changes
         fs.writeFile(file, JSON.stringify(list), 'utf-8', (err) => {
             if (err) throw new Error('Couldn\'t write to the list.json file: ' + err);
