@@ -24,12 +24,12 @@ Object.keys(botCommands).map(key => {
  * @param {*} isInit 
  */
 function readListFile(isInit) {
-    fs.readFile(file, {encoding: 'utf-8', flag: 'a+'}, (err, data) => {
+    fs.readFile(file, { encoding: 'utf8', flag: 'a+' }, (err, data) => {
         if (err) {
             console.error("Failed to read file list.json: " + err)
             return;
         }
-    
+
         try {
             if (data) {
                 listOfAssigns = JSON.parse(data);
@@ -40,7 +40,7 @@ function readListFile(isInit) {
             console.error("Failed to parse list-file: " + err)
             return;
         }
-    
+
         if (isInit) bot.login(process.env.TOKEN);
     });
 }
@@ -67,17 +67,33 @@ bot.on('message', msg => {
     // The message content without the mention
     const args = msg.content.substr(process.env.PREFIX.length).trim().toLowerCase().split(/ +/);
 
-    const command = args.shift().toLowerCase();
+    let command = args.shift().toLowerCase();
 
     console.info(`Called command: ${command}`);
+
+    const isHelp = command.startsWith('?'); // user wants to call the help/description of the command
+
+    if (isHelp) {
+        command = command.substr(1); // Remove ? from the command
+    }
 
     if (!bot.commands.has(command)) return;
 
     try {
-        const res = bot.commands.get(command).execute(msg, args, listOfAssigns);
+        if (isHelp) {
+            const desc = bot.commands.get(command).description;
 
-        if (res) {
-            readListFile(false);
+            if(!desc) {
+                throw new Error(`Command ${command} has no description/help.`);
+            }
+
+            msg.reply(desc);
+        } else {
+            const res = bot.commands.get(command).execute(msg, args, listOfAssigns);
+
+            if (res) {
+                readListFile(false);
+            }
         }
     } catch (error) {
         console.error(error);

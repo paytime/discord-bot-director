@@ -12,6 +12,11 @@ module.exports = {
             throw new Error('The first argument is not a discord user');
         }
 
+        // Check if the second argument is a role
+        if (args[1].length < 7 || args[1].length > 28 || !args[1].startsWith('<@&')) {
+            throw new Error('Invalid role');
+        }
+
         // Find the player
         const playerId = args[0].substr(2, args[0].length - 3);
         const player = msg.guild.members.get(playerId);

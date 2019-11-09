@@ -91,6 +91,11 @@ module.exports = {
                     listAssigner.assignableRoles.push(role);
                 }
             }
+
+            // Clear entries that have no assignable roles
+            if (listAssigner.assignableRoles.length === 0) {
+                list = list.filter(x => x.assigner !== listAssigner.assigner);
+            }
         } else if (!isRemovingRoles) { // Assigner role isn't in the list yet. Also, can't remove roles from an assigner, if the assigner doesn't exist.
             list.push({
                 assigner: assigner.id,
@@ -99,7 +104,7 @@ module.exports = {
         } else return false; // If neither of these apply then just quit here
 
         // Update the list file to reflect the changes
-        fs.writeFile(file, JSON.stringify(list), 'utf-8', (err) => {
+        fs.writeFile(file, JSON.stringify(list), 'utf8', (err) => {
             if (err) throw new Error('Couldn\'t write to the list.json file: ' + err);
         });
         return true;
