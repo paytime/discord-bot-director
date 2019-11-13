@@ -70,8 +70,6 @@ bot.on('message', msg => {
     // The message content without the mention
     const args = msg.content.substr(process.env.PREFIX.length).trim().toLowerCase().split(/ +/);
 
-    console.info('Entered args:' + args);
-
     let command = args.shift().toLowerCase();
 
     console.info(`Called command: ${command}`);
