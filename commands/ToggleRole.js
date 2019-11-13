@@ -20,7 +20,7 @@ module.exports = {
         }
 
         // Find the player
-        const playerId = args[0].substr(2, args[0].length - 3);
+        const playerId = args[0].substr(2, args[0].length - 3).replace('!', '');
         const player = msg.guild.members.get(playerId);
         if (!player) {
             throw new Error(`Couldn't find player: ${args[0]}`);
