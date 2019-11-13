@@ -107,6 +107,9 @@ module.exports = {
         fs.writeFile(file, JSON.stringify(list), 'utf8', (err) => {
             if (err) throw new Error('Couldn\'t write to the list.json file: ' + err);
         });
+
+        msg.reply('Permissions were successfully set.')
+
         return true;
     }
 }

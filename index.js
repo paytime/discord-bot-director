@@ -100,7 +100,7 @@ bot.on('message', msg => {
         }
     } catch (error) {
         console.error(error);
-        msg.reply('**ERROR:** ' + error);
+        msg.reply('**ERROR:** ' + error.message);
     }
 });
 
