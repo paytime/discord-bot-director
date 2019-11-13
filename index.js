@@ -63,6 +63,9 @@ bot.on('message', msg => {
      * * doesn't mention this bot
      */
     if (msg.author.bot || msg.member === null || !msg.content.startsWith(process.env.PREFIX)) return;
+    
+    // Delete the message to avoid spam and tagging too many players
+    msg.delete();
 
     // The message content without the mention
     const args = msg.content.substr(process.env.PREFIX.length).trim().toLowerCase().split(/ +/);
@@ -97,6 +100,7 @@ bot.on('message', msg => {
         }
     } catch (error) {
         console.error(error);
+        msg.reply('**ERROR:** ' + error);
     }
 });
 
