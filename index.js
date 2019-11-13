@@ -65,7 +65,7 @@ bot.on('message', msg => {
     if (msg.author.bot || msg.member === null || !msg.content.startsWith(process.env.PREFIX)) return;
     
     // Delete the message to avoid spam and tagging too many players
-    msg.delete();
+    message.delete().catch(console.error);
 
     // The message content without the mention
     const args = msg.content.substr(process.env.PREFIX.length).trim().toLowerCase().split(/ +/);
