@@ -72,7 +72,7 @@ bot.on('message', msg => {
 
     let command = args.shift().toLowerCase();
 
-    console.log(`${msg.author.name} has called: ${args}`);
+    console.log(`${msg.author.username} has called: ${args}`);
 
     console.info(`Called command: ${command}`);
 
