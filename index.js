@@ -72,6 +72,8 @@ bot.on('message', msg => {
 
     let command = args.shift().toLowerCase();
 
+    console.log(`${msg.author.name} has called: ${args}`);
+
     console.info(`Called command: ${command}`);
 
     const isHelp = command.startsWith('?'); // user wants to call the help/description of the command

@@ -50,10 +50,10 @@ module.exports = {
         if (hasPermission) {
             if (player.roles.has(roleId)) {
                 player.removeRole(role);
-                msg.reply('Role was successfully removed');
+                msg.reply(`\`@${role.name}\` has been removed from \`${player.name}\``);
             } else {
                 player.addRole(role);
-                msg.reply('Role was successfully added');
+                msg.reply(`\`@${role.name}\` has been assigned to \`${player.name}\``);
             }
         }
 
