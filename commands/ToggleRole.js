@@ -2,8 +2,6 @@ module.exports = {
     name: 'toggle',
     description: 'Toggles the role of a user. Syntax: `@bot Toggle @player @ROLE`',
     execute(msg, args, list) {
-        const isAdmin = msg.member.hasPermission('ADMINISTRATOR');
-
         // Check if the args are valid.
         if (args.length !== 2) {
             throw new Error('Wrong number of args.');
@@ -33,10 +31,13 @@ module.exports = {
             throw new Error(`Couldn't find role: ${args[1]}`);
         }
 
+        // Admins have always the permission to change roles that have a lower position than theirs
+        const isAdmin = msg.member.hasPermission('ADMINISTRATOR') && msg.member.highestRole.position > role.position;
+
         // Check if the message's author has the permission to toggle this role
         let hasPermission = false;
 
-        if(isAdmin) { // Admins have always the permission to change roles
+        if(isAdmin) { 
             hasPermission = true;
         } else {
             list.forEach(ele => { // Check if 
@@ -55,6 +56,8 @@ module.exports = {
                 player.addRole(role);
                 msg.reply(`\`@${role.name}\` has been assigned to \`${player.user.username}\``);
             }
+        } else {
+            throw new Error(`You don\'t have the permission to toggle \`@${role.name}\``);
         }
 
         return false;
