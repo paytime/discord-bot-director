@@ -26,9 +26,18 @@ module.exports = {
             exportlist.push(`${nickname};${m.user.username}#${m.user.discriminator};${m.highestRole.name};`);
         });
 
+        // Sort the array by the nicknames
+        exportlist.sort();
+
         // Create the csv-file with the contents
-        fs.writeFile(file, exportlist.join('\n'), err => {
+        fs.writeFile(file, exportlist.join('\n') + '\n', err => {
             if (err) throw new Error('Could not create or write to file.\n' + err);
+
+            msg.reply(`Done! This server has ${exportlist.length - 1} members.`, {
+                files: [file]
+            }).catch((err) => {
+                throw new Error('Could not find or open file.\n' + err);
+            });
         });
 
         // Write a reply message and attach the file
