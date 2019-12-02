@@ -34,6 +34,8 @@ module.exports = {
         // Write a reply message and attach the file
         msg.reply(`Done! This server has ${exportlist.length - 1} members.`, {
             files: [file]
+        }).catch((err) => {
+            throw new Error('Could not find or open file.\n' + err);
         });
 
         // Finally remove the csv file again
