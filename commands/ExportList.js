@@ -29,15 +29,17 @@ module.exports = {
         // Create the csv-file first
         fs.writeFile(file, exportlist, err => {
             if (err) throw err;
-
-            msg.reply(`Done! This server has ${exportlist.length - 1} members.`, { // Write a reply message and attach the file
-                files: [file]
-            }).then( // Finally remove the csv file again
-                fs.unlinkSync(file, err => {
-                    if (err) throw err;
-                })
-            );
         });
+
+        // Write a reply message and attach the file
+        msg.reply(`Done! This server has ${exportlist.length - 1} members.`, {
+            files: [file]
+        });
+
+        // Finally remove the csv file again
+        fs.unlink(file, err => {
+            if (err) throw err;
+        })
 
         return false;
     }
