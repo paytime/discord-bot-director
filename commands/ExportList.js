@@ -17,7 +17,7 @@ module.exports = {
         // Loop through list of guild members
         msg.guild.members().forEach(m => {
             // Ignore bots
-            if (m.user.bot) continue; 
+            if (m.user.bot) return; 
 
             // If the user doesn't have a set nickname, then just take his/her username
             const nickname = m.nickname ? m.nickname : m.user.username;
