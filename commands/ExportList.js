@@ -26,9 +26,9 @@ module.exports = {
             exportlist.push(`${nickname};${m.user.username}#${m.user.discriminator};${m.highestRole.name}`);
         });
 
-        // Create the csv-file first
+        // Create the csv-file with the contents
         fs.writeFile(file, exportlist, err => {
-            if (err) throw err;
+            if (err) throw new Error('Could not create or write to file.\n' + err);
         });
 
         // Write a reply message and attach the file
@@ -38,7 +38,7 @@ module.exports = {
 
         // Finally remove the csv file again
         fs.unlink(file, err => {
-            if (err) throw err;
+            if (err) throw new Error('Could not remove file.\n' + err);
         })
 
         return false;
