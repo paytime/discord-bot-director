@@ -18,7 +18,7 @@ module.exports = {
         // Loop through list of guild members
         msg.guild.members.forEach(m => {
             // Ignore bots
-            if (m.user.bot) return; 
+            if (m.user.bot) return;
 
             // If the user doesn't have a set nickname, then just take his/her username
             const nickname = m.nickname ? m.nickname : m.user.username;
@@ -30,14 +30,17 @@ module.exports = {
         fs.writeFile(file, exportlist, err => {
             if (err) throw err;
 
-            msg.reply(`Done! This server has ${exportlist.length-1} members.`, { // Write a reply message and attach the file
+            msg.reply(`Done! This server has ${exportlist.length - 1} members.`, { // Write a reply message and attach the file
                 files: [file]
-            }).then( // Finally remove the csv file again
-                fs.unlink(file, err => {
-                    if (err) throw err;
-                })
-            );
+            });
         });
+
+
+        // Finally remove the csv file again
+        fs.unlink(file, err => {
+            if (err) throw err;
+        });
+
         return false;
     }
 }
