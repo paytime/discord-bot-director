@@ -32,7 +32,11 @@ module.exports = {
 
             msg.reply(`Done! This server has ${exportlist.length - 1} members.`, { // Write a reply message and attach the file
                 files: [file]
-            });
+            }).then( // Finally remove the csv file again
+                fs.unlinkSync(file, err => {
+                    if (err) throw err;
+                })
+            );
         });
 
 
