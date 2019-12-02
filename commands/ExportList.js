@@ -13,7 +13,7 @@ module.exports = {
         const exportlist = [];
 
         // Append the header first
-        exportlist.push('Nickname;Username;Highest Role');
+        exportlist.push('Nickname;Username;Highest Role;');
 
         // Loop through list of guild members
         msg.guild.members.forEach(m => {
@@ -23,11 +23,11 @@ module.exports = {
             // If the user doesn't have a set nickname, then just take his/her username
             const nickname = m.nickname ? m.nickname : m.user.username;
 
-            exportlist.push(`${nickname};${m.user.username}#${m.user.discriminator};${m.highestRole.name}`);
+            exportlist.push(`${nickname};${m.user.username}#${m.user.discriminator};${m.highestRole.name};`);
         });
 
         // Create the csv-file with the contents
-        fs.writeFile(file, exportlist, err => {
+        fs.writeFile(file, exportlist.join('\n'), err => {
             if (err) throw new Error('Could not create or write to file.\n' + err);
         });
 
