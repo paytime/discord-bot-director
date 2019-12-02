@@ -18,6 +18,8 @@ module.exports = {
         // Append the header first
         exportlist.push('Nickname;Username;Highest Role');
 
+        
+        console.log('ello');
         // Loop through list of guild members
         msg.guild.members().forEach(m => {
             // Ignore bots
