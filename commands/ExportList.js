@@ -29,7 +29,7 @@ module.exports = {
         // Append the header on first position
         exportlist.unshift('Nickname;Username;Highest Role;');
 
-        const finalString = exportlist.join('\n') + '\n';
+        const finalString = exportlist.join('\n');
 
         // Create the csv-file with the contents
         fs.writeFile(file, finalString, err => {
@@ -46,8 +46,6 @@ module.exports = {
                 throw new Error('Could not find or open file.\n' + err);
             });
         });
-
-        console.log(finalString);
 
         return false;
     }
