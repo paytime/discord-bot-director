@@ -30,16 +30,16 @@ module.exports = {
         exportlist.unshift('Nickname;Username;Highest Role;');
 
         // Create the csv-file with the contents
-        fs.writeFile(file, { enconding: 'utf8' }, exportlist.join('\n') + '\n', err => {
+        fs.writeFile(file, { encoding: 'utf8' }, exportlist.join('\n') + '\n', err => {
             if (err) throw new Error('Could not create or write to file.\n' + err);
 
             // Write a reply message and attach the file
             msg.reply(`Done! This server has ${exportlist.length - 1} members.`, {
                 files: [file]
             }).then(() => { // Finally remove the csv file again
-                fs.unlink(file, err => {
+                /*fs.unlink(file, err => {
                     if (err) throw new Error('Could not remove file.\n' + err);
-                });
+                });*/
             }).catch((err) => {
                 throw new Error('Could not find or open file.\n' + err);
             });
