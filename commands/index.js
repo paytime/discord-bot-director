@@ -1,5 +1,6 @@
 module.exports = {
     Info: require('./Info'),
     SetAssign: require('./SetAssign'),
-    ToggleRole: require('./ToggleRole')
+    ToggleRole: require('./ToggleRole'),
+    ExportList: require('./ExportList')
 };
