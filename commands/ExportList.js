@@ -12,9 +12,6 @@ module.exports = {
         // A CSV list that will contain all users of the server
         const exportlist = [];
 
-        // Append the header first
-        exportlist.push('Nickname;Username;Highest Role;');
-
         // Loop through list of guild members
         msg.guild.members.forEach(m => {
             // Ignore bots
@@ -28,6 +25,9 @@ module.exports = {
 
         // Sort the array by the nicknames
         exportlist.sort();
+
+        // Append the header on first position
+        exportlist.unshift('Nickname;Username;Highest Role;');
 
         // Create the csv-file with the contents
         fs.writeFile(file, exportlist.join('\n') + '\n', err => {
