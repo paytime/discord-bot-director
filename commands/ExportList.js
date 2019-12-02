@@ -32,7 +32,7 @@ module.exports = {
         });
 
         // Write a reply message and attach the file
-        msg.reply(`Done! This server has ${exportlist.length - 1} members.`, {
+        /*msg.reply(`Done! This server has ${exportlist.length - 1} members.`, {
             files: [file]
         }).catch((err) => {
             throw new Error('Could not find or open file.\n' + err);
@@ -41,7 +41,7 @@ module.exports = {
         // Finally remove the csv file again
         fs.unlink(file, err => {
             if (err) throw new Error('Could not remove file.\n' + err);
-        })
+        });*/
 
         return false;
     }
