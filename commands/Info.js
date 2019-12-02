@@ -1,5 +1,3 @@
-const Discord = require('discord.js');
-
 module.exports = {
     name: 'info',
     description: 'Explains this bot\'s functionality.\n**ADMINS ONLY**',
@@ -42,7 +40,7 @@ module.exports = {
 
             msg.reply(`\`@${role.name}\` can assign the role(s): \`\`\`${roleNames.join('\n')}\`\`\``);
         } else { // Explain this bot's functionality
-            msg.reply("\nI am a **simple role assingment bot** for Discord. Administrators can define which role(s) can be (un)assigned by other roles.\nCommands:\n- `Info`\n- `Let`\n- `Toggle`\nType `?<command>` (without < and >) to get the description for a command.\nYou can also type `info @Role` to see what permissions this role has.");
+            msg.reply("\nI am a **simple role assingment bot** for Discord. Administrators can define which role(s) can be (un)assigned by other roles.\nCommands:\n- `Info`\n- `Let`\n- `Toggle`\n- `ExportList`\nType `?<command>` (without < and >) to get the description for a command.\nYou can also type `info @Role` to see what permissions this role has.");
         }
 
         return false;

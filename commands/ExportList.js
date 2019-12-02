@@ -1,4 +1,5 @@
-const Discord = require('discord.js');
+const fs = require('fs');
+const file = './members.csv';
 
 module.exports = {
     name: 'exportlist',
@@ -25,10 +26,18 @@ module.exports = {
             exportlist.push(`${nickname};${m.user.username}#${m.user.discriminator};${m.highestRole.name}`);
         });
 
-        console.log(exportlist);
+        // Create the csv-file first
+        fs.writeFile(file, exportlist, err => {
+            if (err) throw err;
 
-        msg.reply(`Done! This server has ${exportlist.length-1} members.`);
-
+            msg.reply(`Done! This server has ${exportlist.length-1} members.`, { // Write a reply message and attach the file
+                files: [file]
+            }).then( // Finally remove the csv file again
+                fs.unlink(file, err => {
+                    if (err) throw err;
+                })
+            );
+        });
         return false;
     }
 }
