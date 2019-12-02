@@ -30,7 +30,7 @@ module.exports = {
         exportlist.unshift('Nickname;Username;Highest Role;');
 
         // Create the csv-file with the contents
-        fs.writeFile(file, exportlist.join('\n') + '\n', err => {
+        fs.writeFile(file, { enconding: 'utf8' }, exportlist.join('\n') + '\n', err => {
             if (err) throw new Error('Could not create or write to file.\n' + err);
 
             // Write a reply message and attach the file
