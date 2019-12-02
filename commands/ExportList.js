@@ -8,18 +8,12 @@ module.exports = {
             throw new Error('User is not an admin.');
         }
 
-        if (args.length > 1) {
-            throw new Error('Invalid args');
-        }
-
         // A CSV list that will contain all users of the server
         const exportlist = [];
 
         // Append the header first
         exportlist.push('Nickname;Username;Highest Role');
 
-        
-        console.log('ello');
         // Loop through list of guild members
         msg.guild.members().forEach(m => {
             // Ignore bots
