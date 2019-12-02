@@ -39,12 +39,6 @@ module.exports = {
             );
         });
 
-
-        // Finally remove the csv file again
-        fs.unlink(file, err => {
-            if (err) throw err;
-        });
-
         return false;
     }
 }
