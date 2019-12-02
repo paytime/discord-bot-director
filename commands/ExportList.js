@@ -15,7 +15,7 @@ module.exports = {
         exportlist.push('Nickname;Username;Highest Role');
 
         // Loop through list of guild members
-        msg.guild.members().forEach(m => {
+        msg.guild.members.forEach(m => {
             // Ignore bots
             if (m.user.bot) return; 
 
@@ -26,6 +26,8 @@ module.exports = {
         });
 
         console.log(exportlist);
+
+        msg.reply(`Done! This server has ${exportlist.length-1} members.`);
 
         return false;
     }
