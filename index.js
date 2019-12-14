@@ -10,8 +10,8 @@ bot.commands = new Discord.Collection();
 const botCommands = require('./commands');
 
 const prefix = [
-    `<@${process.env.PREFIX}>`,
-    `<@!${process.env.PREFIX}>`
+    `<@${process.env.BOTID}>`,
+    `<@!${process.env.BOTID}>`
 ]
 
 const file = './list.json';
