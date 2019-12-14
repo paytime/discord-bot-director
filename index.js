@@ -9,6 +9,11 @@ bot.commands = new Discord.Collection();
 
 const botCommands = require('./commands');
 
+const prefix = [
+    `<@${process.env.PREFIX}>`,
+    `<@!${process.env.PREFIX}>`
+]
+
 const file = './list.json';
 let listOfAssigns = [];
 
@@ -62,13 +67,22 @@ bot.on('message', msg => {
      * * from another bot
      * * doesn't mention this bot
      */
-    if (msg.author.bot || msg.member === null || !msg.content.startsWith(process.env.PREFIX)) return;
+    if (msg.author.bot || msg.member === null) return;
+
+    let len = 0;
+    if (msg.content.startsWith(prefix[0])) {
+        len = prefix[0].length;
+    } else if (msg.content.startsWith(prefix[1])) {
+        len = prefix[1].length;
+    } else {
+        return;
+    }
     
     // Delete the message to avoid spam and tagging too many players
     msg.delete().catch(console.error);
 
     // The message content without the mention
-    const args = msg.content.substr(process.env.PREFIX.length).trim().toLowerCase().split(/ +/);
+    const args = msg.content.substr(len).trim().toLowerCase().split(/ +/);
 
     let command = args.shift().toLowerCase();
 
