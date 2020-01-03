@@ -263,7 +263,7 @@ function setupChannel() {
         const count = Array.from(guild.members.filter(m => !m.user.bot && m.roles.has(c.id))).length;
         const emoji = guild.emojis.find(e => e.name === c.emoji);
 
-        const text = `[${emoji} <@&${c.id}> **(${count})**](${getChannelLink(c.channel)})\n\n`;
+        const text = `${emoji} <@&${c.id}> [**(${count})**](${getChannelLink(c.channel)})\n\n`;
 
         if (i > 3) {
             classFields2 += text;
@@ -279,7 +279,7 @@ function setupChannel() {
         const c = roles.roles.list[i];
         const count = Array.from(guild.members.filter(m => !m.user.bot && m.roles.has(c.id))).length;
 
-        rolesFields += `[<@&${c.id}> **(${count})**](${getChannelLink(c.channel)})    `;
+        rolesFields += `<@&${c.id}> [**(${count})**](${getChannelLink(c.channel)})    `;
     }
 
     let raidersFields = `**[Raiders](${getChannelLink(roles.raiders.select)})**\n\n`;
@@ -289,7 +289,7 @@ function setupChannel() {
         const c = roles.raiders.list[i];
         const count = Array.from(guild.members.filter(m => !m.user.bot && m.roles.has(c.id))).length;
 
-        const text = `[${c.emoji} <@&${c.id}> **(${count})**](${getChannelLink(c.channel)})    `;
+        const text = `${c.emoji} <@&${c.id}> [**(${count})**](${getChannelLink(c.channel)})    `;
 
         raidersFields += text;
 
@@ -305,7 +305,7 @@ function setupChannel() {
         const count = Array.from(guild.members.filter(m => !m.user.bot && m.roles.has(c.id))).length;
         const emoji = guild.emojis.find(e => e.name === c.emoji);
 
-        const text = `[${emoji} <@&${c.id}> **(${count})**](${getChannelLink(c.channel)})\n\n`;
+        const text = `${emoji} <@&${c.id}> [**(${count})**](${getChannelLink(c.channel)})\n\n`;
 
         if (i > 3) {
             profFields2 += text;
