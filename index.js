@@ -14,7 +14,9 @@ const prefix = [
     `<@!${process.env.BOTID}>`
 ]
 
-const file = './config/assignments.json';
+const assignmentsFile = './config/assignments.json';
+const rolesFile = './config/roles.json';
+
 let listOfAssigns = [];
 
 const serverId = process.env.SERVERID;
@@ -199,9 +201,9 @@ Object.keys(botCommands).map(key => {
  * Read the list file and launch the bot
  */
 function readAssignmentsFile() {
-    fs.readFile(file, { encoding: 'utf8', flag: 'a+' }, (err, data) => {
+    fs.readFile(assignmentsFile, { encoding: 'utf8', flag: 'a+' }, (err, data) => {
         if (err) {
-            throw new Error("Failed to read file list.json: " + err);
+            throw new Error("Failed to read file assignments.json: " + err);
         }
 
         try {
@@ -220,7 +222,7 @@ function readAssignmentsFile() {
  * Reads the specified roles file
  */
 function readRolesFile() {
-    fs.readFile('./roles.json', (err, data) => {
+    fs.readFile(rolesFile, (err, data) => {
         if (err) { // File doesn't exist.
             throw new Error('Roles file does not exist. Check out the \'roles.example.json\' file!');
         }
