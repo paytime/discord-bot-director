@@ -1,5 +1,5 @@
 const fs = require('fs');
-const file = './list.json';
+const file = './config/assignments.json';
 
 module.exports = {
     name: 'let',

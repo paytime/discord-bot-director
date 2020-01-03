@@ -61,4 +61,5 @@ typings/
 .next
 
 # discord-bot-director specific
-list.json
+assignments.json
+roles.json
