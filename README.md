@@ -1,2 +1,2 @@
 # discord-bot-director
-A role assignment discord bot
+A configurable role assignment discord bot as well as a server statistics bot.
