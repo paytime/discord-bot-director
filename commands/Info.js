@@ -25,7 +25,7 @@ module.exports = {
             const res = list.find(x => x.assigner === roleId);
 
             if (!res) {
-                msg.reply("This role has no role assignement permissions.");
+                msg.reply(`\`@${role.name}\` cannot assign any role(s).`);
                 return false;
             }
 
