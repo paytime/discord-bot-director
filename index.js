@@ -387,7 +387,7 @@ function reconnect(isFirstLogin) {
 
     try{
         bot.destroy();
-        bot.login(process.env.TOKEN);
+        bot.login(process.env.TOKEN).catch(console.error);;
     } catch (err) {
         console.error('Cannot login BOT. Check your Internet connection.');
         reconnect(false);
