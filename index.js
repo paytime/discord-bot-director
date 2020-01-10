@@ -9,28 +9,28 @@ bot.commands = new Discord.Collection();
 
 const botCommands = require('./commands');
 
-const prefix = [
-    `<@${process.env.BOTID}>`,
-    `<@!${process.env.BOTID}>`
-]
-
 const assignmentsFile = './config/assignments.json';
 const rolesFile = './config/roles.json';
 
-let listOfAssigns = [];
-
 const serverId = process.env.SERVERID;
 const channelId = process.env.CHANNELID;
-const invchannelId = process.env.INVCHANNELID;
+const invchannelId = process.env.BOTINVCHANNELIDID;
 const botId = process.env.BOTID;
-const iconUrl = process.env.ICONURL;
 
 let guild;
 let channel;
 let invchannel;
-let roles = {};
 
-let messageId;
+const options = {
+    prefix: [
+        `<@${process.env.BOTID}>`,
+        `<@!${process.env.BOTID}>`
+    ],
+    iconUrl: process.env.ICONURL,
+    roles: {},
+    listOfAssigns: [],
+    statsMessageId: null
+}
 
 /**
  * Calls when the bot has started
@@ -104,8 +104,8 @@ bot.on('guildMemberUpdate', setupChannel);
  * Whenever a reaction is added to the stats message, the reaction will be removed and an invite link will be generated
  */
 bot.on('messageReactionAdd', (msgReact, user) => {
-    if (!messageId) return;
-    if (msgReact.message.id !== messageId) return;
+    if (!options.statsMessageId) return;
+    if (msgReact.message.id !== options.statsMessageId) return;
 
     msgReact.message.clearReactions().then(() => {
         if (!user || user.bot || !user.id) return;
@@ -140,10 +140,10 @@ bot.on('message', msg => {
     if (msg.author.bot || msg.member === null) return;
 
     let len = 0;
-    if (msg.content.startsWith(prefix[0])) {
-        len = prefix[0].length;
-    } else if (msg.content.startsWith(prefix[1])) {
-        len = prefix[1].length;
+    if (msg.content.startsWith(options.prefix[0])) {
+        len = options.prefix[0].length;
+    } else if (msg.content.startsWith(options.prefix[1])) {
+        len = options.prefix[1].length;
     } else {
         return;
     }
@@ -178,7 +178,7 @@ bot.on('message', msg => {
 
             msg.reply(desc);
         } else {
-            const res = bot.commands.get(command).execute(msg, args, listOfAssigns);
+            const res = bot.commands.get(command).execute(msg, args, options);
 
             if (res) {
                 readAssignmentsFile();
@@ -208,9 +208,9 @@ function readAssignmentsFile() {
 
         try {
             if (data) {
-                listOfAssigns = JSON.parse(data);
+                options.listOfAssigns = JSON.parse(data);
             } else {
-                listOfAssigns = [];
+                options.listOfAssigns = [];
             }
         } catch (err) {
             throw new Error("Failed to parse list-file: " + err);
@@ -228,7 +228,7 @@ function readRolesFile() {
         }
 
         try {
-            roles = JSON.parse(data);
+            options.roles = JSON.parse(data);
         } catch (err) {
             throw new Error("Failed to parse list-file: " + err)
         }
@@ -255,11 +255,11 @@ function setupChannel() {
     const membersCount = Array.from(guild.members.filter(m => !m.user.bot)).length; // Members count excluding bots.
 
     // Get all class roles
-    let classFields = `**[Classes](${getChannelLink(roles.classes.select)})**\n\n`;
+    let classFields = `**[Classes](${getChannelLink(options.roles.classes.select)})**\n\n`;
     let classFields2 = "\u200b\n\n"; // Workaround for the field 1024 chars limit
 
-    for (let i = 0; i < roles.classes.list.length; i++) {
-        const c = roles.classes.list[i];
+    for (let i = 0; i < options.roles.classes.list.length; i++) {
+        const c = options.roles.classes.list[i];
         const count = Array.from(guild.members.filter(m => !m.user.bot && m.roles.has(c.id))).length;
         const emoji = guild.emojis.find(e => e.name === c.emoji);
 
@@ -272,21 +272,21 @@ function setupChannel() {
         }
     }
 
-    let rolesFields = `**[Roles](${getChannelLink(roles.roles.select)})**\n\n`;
+    let rolesFields = `**[Roles](${getChannelLink(options.roles.roles.select)})**\n\n`;
 
     // Get all ingame roles
-    for (let i = 0; i < roles.roles.list.length; i++) {
-        const c = roles.roles.list[i];
+    for (let i = 0; i < options.roles.roles.list.length; i++) {
+        const c = options.roles.roles.list[i];
         const count = Array.from(guild.members.filter(m => !m.user.bot && m.roles.has(c.id))).length;
 
         rolesFields += `<@&${c.id}> [**(${count})**](${getChannelLink(c.channel)})    `;
     }
 
-    let raidersFields = `**[Raiders](${getChannelLink(roles.raiders.select)})**\n\n`;
+    let raidersFields = `**[Raiders](${getChannelLink(options.roles.raiders.select)})**\n\n`;
 
     // Get all raider roles
-    for (let i = 0; i < roles.raiders.list.length; i++) {
-        const c = roles.raiders.list[i];
+    for (let i = 0; i < options.roles.raiders.list.length; i++) {
+        const c = options.roles.raiders.list[i];
         const count = Array.from(guild.members.filter(m => !m.user.bot && m.roles.has(c.id))).length;
 
         const text = `${c.emoji} <@&${c.id}> [**(${count})**](${getChannelLink(c.channel)})    `;
@@ -296,12 +296,12 @@ function setupChannel() {
         if (i === 1) raidersFields += '\n\n';
     }
 
-    let profFields = `**[Professions](${getChannelLink(roles.professions.select)})**\n\n`;
+    let profFields = `**[Professions](${getChannelLink(options.roles.professions.select)})**\n\n`;
     let profFields2 = "\u200b\n\n"; // Workaround for the field 1024 chars limit
 
     // Get all profession roles
-    for (let i = 0; i < roles.professions.list.length; i++) {
-        const c = roles.professions.list[i];
+    for (let i = 0; i < options.roles.professions.list.length; i++) {
+        const c = options.roles.professions.list[i];
         const count = Array.from(guild.members.filter(m => !m.user.bot && m.roles.has(c.id))).length;
         const emoji = guild.emojis.find(e => e.name === c.emoji);
 
@@ -321,7 +321,7 @@ function setupChannel() {
             description: `Guild Members: **${membersCount}**`,
             color: 8462170,
             thumbnail: {
-                url: iconUrl
+                url: options.iconUrl
             },
             fields: [
                 {
@@ -356,7 +356,7 @@ function setupChannel() {
                 }
             ],
             footer: {
-                icon_url: iconUrl,
+                icon_url: options.iconUrl,
                 text: `© <${guild.name}>`
             }
         }
@@ -364,7 +364,7 @@ function setupChannel() {
 
     channel.send(content).then(sent => {
         console.info(`Stats updated at: ${date}`);
-        messageId = sent.id;
+        options.statsMessageId = sent.id;
     });
 }
 

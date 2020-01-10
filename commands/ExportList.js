@@ -4,7 +4,7 @@ const file = './members.csv';
 module.exports = {
     name: 'exportlist',
     description: 'Exports a csv list of all guild members.\n**ADMINS ONLY**',
-    execute(msg, args, list) {
+    execute(msg, args, options) {
         if (!msg.member.hasPermission('ADMINISTRATOR')) {
             throw new Error('User is not an admin.');
         }

@@ -1,7 +1,7 @@
 module.exports = {
     name: 'info',
     description: 'Explains this bot\'s functionality.\n**ADMINS ONLY**',
-    execute(msg, args, list) {
+    execute(msg, args, options) {
         if (!msg.member.hasPermission('ADMINISTRATOR')) {
             throw new Error('User is not an admin.');
         }
@@ -22,7 +22,7 @@ module.exports = {
                 throw new Error(`Couldn't find role: ${args[0]}`);
             }
 
-            const res = list.find(x => x.assigner === roleId);
+            const res = options.listOfAssignments.find(x => x.assigner === roleId);
 
             if (!res) {
                 msg.reply(`\`@${role.name}\` cannot assign any role(s).`);

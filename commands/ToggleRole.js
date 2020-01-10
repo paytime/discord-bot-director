@@ -1,7 +1,7 @@
 module.exports = {
     name: 'toggle',
     description: 'Toggles the role of a user. Syntax: `@bot Toggle @player @ROLE`',
-    execute(msg, args, list) {
+    execute(msg, args, options) {
         // Check if the args are valid.
         if (args.length !== 2) {
             throw new Error('Wrong number of args.');
@@ -40,7 +40,7 @@ module.exports = {
         if(isAdmin) { 
             hasPermission = true;
         } else {
-            list.forEach(ele => { // Check if 
+            options.listOfAssignments.forEach(ele => { // Check if 
                 if (msg.member.roles.has(ele.assigner) && ele.assignableRoles.includes(roleId)) {
                     hasPermission = true;
                 }

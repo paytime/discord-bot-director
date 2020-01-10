@@ -4,7 +4,7 @@ const file = './config/assignments.json';
 module.exports = {
     name: 'let',
     description: "Gives (or removes) a role the permission to assign specific roles to other users.\nSyntax: `@bot Let <Assigner_Role> [Not] Set <Other_Role_1> [<Other_Role_2 ...]`\n**ADMINS ONLY**",
-    execute(msg, args, list) {
+    execute(msg, args, options) {
         if (!msg.member.hasPermission('ADMINISTRATOR')) {
             throw new Error('User is not an admin.');
         }
@@ -79,7 +79,7 @@ module.exports = {
 
         // Finally save the assigner with its assignable roles to a list.
         // First, let's check if the assigner is already in the list
-        const listAssigner = list.find(x => x.assigner === assigner.id);
+        const listAssigner = options.listOfAssignments.find(x => x.assigner === assigner.id);
 
         if (listAssigner) { // Assigner role is already in the list. Just update the entry itself then.
             for (let i = 0; i < assignableRoles.length; i++) {
@@ -94,17 +94,17 @@ module.exports = {
 
             // Clear entries that have no assignable roles
             if (listAssigner.assignableRoles.length === 0) {
-                list = list.filter(x => x.assigner !== listAssigner.assigner);
+                options.listOfAssignments = list.filter(x => x.assigner !== listAssigner.assigner);
             }
         } else if (!isRemovingRoles) { // Assigner role isn't in the list yet. Also, can't remove roles from an assigner, if the assigner doesn't exist.
-            list.push({
+        options.listOfAssignments.push({
                 assigner: assigner.id,
                 assignableRoles: assignableRoles
             });
         } else return false; // If neither of these apply then just quit here
 
         // Update the list file to reflect the changes
-        fs.writeFile(file, JSON.stringify(list), 'utf8', (err) => {
+        fs.writeFile(file, JSON.stringify(options.listOfAssignments), 'utf8', (err) => {
             if (err) throw new Error('Couldn\'t write to the list.json file: ' + err);
         });
 
