@@ -22,7 +22,7 @@ module.exports = {
                 throw new Error(`Couldn't find role: ${args[0]}`);
             }
 
-            const res = options.listOfAssignments.find(x => x.assigner === roleId);
+            const res = options.listOfAssigns.find(x => x.assigner === roleId);
 
             if (!res) {
                 msg.reply(`\`@${role.name}\` cannot assign any role(s).`);

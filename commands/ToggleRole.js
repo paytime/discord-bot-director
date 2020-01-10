@@ -40,7 +40,7 @@ module.exports = {
         if(isAdmin) { 
             hasPermission = true;
         } else {
-            options.listOfAssignments.forEach(ele => { // Check if 
+            options.listOfAssigns.forEach(ele => { // Check if 
                 if (msg.member.roles.has(ele.assigner) && ele.assignableRoles.includes(roleId)) {
                     hasPermission = true;
                 }

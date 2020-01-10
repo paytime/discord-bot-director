@@ -14,7 +14,7 @@ const rolesFile = './config/roles.json';
 
 const serverId = process.env.SERVERID;
 const channelId = process.env.CHANNELID;
-const invchannelId = process.env.BOTINVCHANNELIDID;
+const invchannelId = process.env.INVCHANNELID;
 const botId = process.env.BOTID;
 
 let guild;
@@ -71,7 +71,7 @@ bot.on('ready', () => {
 
     invchannel = guild.channels.get(invchannelId);
 
-    if (!channel) {
+    if (!invchannel) {
         console.error('Could not find main/invite channel!');
         reconnect(false);
         return;
