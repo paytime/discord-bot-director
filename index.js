@@ -148,9 +148,6 @@ bot.on('message', msg => {
         return;
     }
 
-    // Delete the message to avoid spam and tagging too many players
-    msg.delete().catch(console.error);
-
     // The message content without the mention
     const args = msg.content.substr(len).trim().toLowerCase().split(/ +/);
 

@@ -13,8 +13,21 @@ module.exports = {
         }
 
         // Check if the second argument is a role
-        if (args[1].length < 7 || args[1].length > 28 || !args[1].startsWith('<@&')) {
-            throw new Error('Invalid role');
+        let roleArg = args[1];
+        if (roleArg.length < 7 || roleArg.length > 28 || !roleArg.startsWith('<@&')) {
+            // It's not a role id. Let's check if it's an emoji that matches a raider role id.
+            const raiders = options.roles.raiders.list;
+            let hasFoundRole = false;
+            for (let i = 0; i < raiders.length; i++) {
+                const raider = raiders[i];
+
+                if (raider.emoji === roleArg) {
+                    roleArg = `<@&${raider.id}>`;
+                    hasFoundRole = true;
+                    break;
+                }
+            }
+            if (!hasFoundRole) throw new Error('Invalid role');
         }
 
         // Find the player
@@ -25,10 +38,10 @@ module.exports = {
         }
 
         // Find the role
-        const roleId = args[1].substr(3, args[1].length - 4);
+        const roleId = roleArg.slice(3, -1);
         const role = msg.guild.roles.get(roleId);
         if (!role) {
-            throw new Error(`Couldn't find role: ${args[1]}`);
+            throw new Error(`Couldn't find role: ${roleArg}`);
         }
 
         // Admins have always the permission to change roles that have a lower position than theirs
