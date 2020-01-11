@@ -62,9 +62,12 @@ bot.on('guildMemberRemove', updateStats);
 bot.on('guildMemberUpdate', updateStats);
 
 /**
- * Whenever a reaction is added to the stats message, the reaction will be removed and an invite link will be generated
+ * Calls when a user reacts on a bot's message
  */
 bot.on('messageReactionAdd', (msgReact, user) => {
+    if (msgReact.me) return;
+
+    // Whenever a reaction is added to the stats message, the reaction will be removed and an invite link will be generated.
     if (msgReact.message.id === params.statsmsg.id) {
         stats.sendInviteLink(msgReact, user, bot);
     }
