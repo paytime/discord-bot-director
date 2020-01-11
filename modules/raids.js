@@ -389,7 +389,7 @@ function startSignUps(raid, members, raiderRole, params) {
                     members.set(user.id, {
                         id: user.id,
                         roles: roles,
-                        displayName: args[0].replace(/^\w/, c => c.toUpperCase())
+                        displayName: args[0].replace(/^\w/, c => c.toUpperCase()) + ` \`${members.size + 1}\``
                     });
                     const editedContent = signUpRoster(raid, members, raiderRole, params);
                     raid.edit(startmsg, { embed: editedContent });
