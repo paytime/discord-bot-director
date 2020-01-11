@@ -1,7 +1,16 @@
+'use strict';
+const Discord = require('discord.js');
+
 module.exports = {
     name: 'toggle',
     description: 'Toggles the role of a user. Syntax: `@bot Toggle @player @ROLE`',
-    execute(msg, args, options) {
+    /**
+     * The execute command
+     * @param {Discord.Message} msg 
+     * @param {Array<String>} args 
+     * @param {*} params 
+     */
+    execute(msg, args, params) {
         // Check if the args are valid.
         if (args.length !== 2) {
             throw new Error('Wrong number of args.');
@@ -16,7 +25,7 @@ module.exports = {
         let roleArg = args[1];
         if (roleArg.length < 7 || roleArg.length > 28 || !roleArg.startsWith('<@&')) {
             // It's not a role id. Let's check if it's an emoji that matches a raider role id.
-            const raiders = options.roles.raiders.list;
+            const raiders = params.roles.raiders.list;
             let hasFoundRole = false;
             for (let i = 0; i < raiders.length; i++) {
                 const raider = raiders[i];
@@ -50,10 +59,10 @@ module.exports = {
         // Check if the message's author has the permission to toggle this role
         let hasPermission = false;
 
-        if(isAdmin) { 
+        if (isAdmin) {
             hasPermission = true;
         } else {
-            options.listOfAssigns.forEach(ele => { // Check if 
+            params.assigns.forEach(ele => { // Check if 
                 if (msg.member.roles.has(ele.assigner) && ele.assignableRoles.includes(roleId)) {
                     hasPermission = true;
                 }
@@ -74,7 +83,5 @@ module.exports = {
         }
 
         msg.delete();
-
-        return false;
     }
 }

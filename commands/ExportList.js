@@ -1,10 +1,19 @@
+'use strict';
+const Discord = require('discord.js');
+
 const fs = require('fs');
 const file = './members.csv';
 
 module.exports = {
     name: 'exportlist',
     description: 'Exports a csv list of all guild members.\n**ADMINS ONLY**',
-    execute(msg, args, options) {
+    /**
+     * The execute command
+     * @param {Discord.Message} msg 
+     * @param {Array<String>} args 
+     * @param {*} params 
+     */
+    execute(msg, args, params) {
         if (!msg.member.hasPermission('ADMINISTRATOR')) {
             throw new Error('User is not an admin.');
         }
@@ -17,10 +26,7 @@ module.exports = {
             // Ignore bots
             if (m.user.bot) return;
 
-            // If the user doesn't have a set nickname, then just take his/her username
-            const nickname = m.nickname ? m.nickname : m.user.username;
-
-            exportlist.push(`${nickname};${m.user.username}#${m.user.discriminator};${m.highestRole.name};`);
+            exportlist.push(`${m.displayName};${m.user.username}#${m.user.discriminator};${m.highestRole.name};`);
         });
 
         // Sort the array by the nicknames

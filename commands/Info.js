@@ -1,7 +1,16 @@
+'use strict';
+const Discord = require('discord.js');
+
 module.exports = {
     name: 'info',
     description: 'Explains this bot\'s functionality.\n**ADMINS ONLY**',
-    execute(msg, args, options) {
+    /**
+     * The execute command
+     * @param {Discord.Message} msg 
+     * @param {Array<String>} args 
+     * @param {*} params 
+     */
+    execute(msg, args, params) {
         if (!msg.member.hasPermission('ADMINISTRATOR')) {
             throw new Error('User is not an admin.');
         }
@@ -22,7 +31,7 @@ module.exports = {
                 throw new Error(`Couldn't find role: ${args[0]}`);
             }
 
-            const res = options.listOfAssigns.find(x => x.assigner === roleId);
+            const res = params.assigns.find(x => x.assigner === roleId);
 
             if (!res) {
                 msg.reply(`\`@${role.name}\` cannot assign any role(s).`);
@@ -42,7 +51,5 @@ module.exports = {
         } else { // Explain this bot's functionality
             msg.reply("\nI am a **simple role assingment bot** for Discord. Administrators can define which role(s) can be (un)assigned by other roles.\nCommands:\n- `Info`\n- `Let`\n- `Toggle`\n- `ExportList`\nType `?<command>` (without < and >) to get the description for a command.\nYou can also type `info @Role` to see what permissions this role has.");
         }
-
-        return false;
     }
 }

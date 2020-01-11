@@ -1,17 +1,19 @@
+'use strict';
 const Discord = require('discord.js');
+const iconUrl = process.env.ICONURL;
 
 module.exports = {
     name: 'roster',
-    description: 'Displays the raid roster of the user\'s raid group or of a specified raid. Syntax: `@bot roster [@Raider Role]`',
+    description: 'Displays the raid roster of the user\'s raid group or of a specified raid. Syntax: `@bot roster [@Raider]`',
     /**
      * The execute command
      * @param {Discord.Message} msg 
      * @param {Array<String>} args 
-     * @param {*} options 
+     * @param {*} params 
      */
-    execute(msg, args, options) {
-        const leaderRoleId = options.roles.raiders.leader;
-        const assistRoleId = options.roles.raiders.assist;
+    execute(msg, args, params) {
+        const leaderRoleId = params.roles.raiders.leader;
+        const assistRoleId = params.roles.raiders.assist;
 
         if (!msg.member.hasPermission('ADMINISTRATOR') && !msg.member.roles.has(leaderRoleId) && !msg.member.roles.has(assistRoleId)) {
             throw new Error('You do not have the permission to use this command.');
@@ -22,15 +24,15 @@ module.exports = {
         if (args && args.length > 0 && args[0].startsWith('<@&') && args[0].endsWith('>')) {
             const roleId = args[0].slice(3, -1);
 
-            if (options.roles.raiders.list.some(x => x.id === roleId)) {
+            if (params.roles.raiders.list.some(x => x.id === roleId)) {
                 raiderRole = roleId;
             } else {
                 throw new Error('Role is not a raider role.');
             }
         } else {
             // Find the user's first raider role
-            for (let i = 0; i < options.roles.raiders.list.length; i++) {
-                const roleId = options.roles.raiders.list[i].id;
+            for (let i = 0; i < params.roles.raiders.list.length; i++) {
+                const roleId = params.roles.raiders.list[i].id;
 
                 if (msg.member.roles.has(roleId)) {
                     raiderRole = roleId;
@@ -47,23 +49,23 @@ module.exports = {
         const members = msg.guild.members.filter(member => member.roles.has(raiderRole));
 
         // Get the raid's info
-        const raidInfo = options.roles.raiders.list.find(x => x.id === raiderRole);
+        const raidInfo = params.roles.raiders.list.find(x => x.id === raiderRole);
 
         // Find the raid's leader and assists
         const raidLeader = members.find(member => member.roles.has(leaderRoleId));
         const raidAssists = members.filter(member => member.roles.has(assistRoleId)).array();
 
-        raidAssists.toString = function() {
+        raidAssists.toString = function () {
             return this.join(' ');
         };
 
         const empty = '\u200b';
 
         // Create fields for each role/class combo
-        const classes = options.roles.classes.list;
-        const roles = options.roles.roles.list;
+        const classes = params.roles.classes.list;
+        const roles = params.roles.roles.list;
 
-        Array.prototype.toString = function() {
+        Array.prototype.toString = function () {
             return this.join('\n');
         }
 
@@ -77,11 +79,11 @@ module.exports = {
         const priests = [];
         const hunters = [];
 
-        const emoji = function(roleCount) {
+        const emoji = function (roleCount) {
             return msg.guild.emojis.find(e => e.name === roles[roleCount].emoji)
         };
 
-        const sort = function(a, b) {
+        const sort = function (a, b) {
             if (a.displayName > b.displayName) return 1;
             else if (b.displayName > a.displayName) return -1;
             return 0;
@@ -233,11 +235,11 @@ module.exports = {
                 description: `**Leader:** ${raidLeader}\n**Assistants:** ${raidAssists}`,
                 color: 16715264,
                 thumbnail: {
-                    url: options.iconUrl
+                    url: iconUrl
                 },
                 fields: fields,
                 footer: {
-                    icon_url: options.iconUrl,
+                    icon_url: iconUrl,
                     text: `© <${msg.guild.name}>`
                 }
             }

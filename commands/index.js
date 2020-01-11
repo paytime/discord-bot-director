@@ -3,5 +3,6 @@ module.exports = {
     SetAssign: require('./SetAssign'),
     ToggleRole: require('./ToggleRole'),
     ExportList: require('./ExportList'),
-    Roster: require('./Roster')
+    Roster: require('./Roster'),
+    Raid: require('./Raid')
 };

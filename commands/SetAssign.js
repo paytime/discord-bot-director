@@ -1,10 +1,20 @@
+'use strict';
+const Discord = require('discord.js');
+const helpers = require('../modules/helpers');
+
 const fs = require('fs');
 const file = './config/assignments.json';
 
 module.exports = {
     name: 'let',
     description: "Gives (or removes) a role the permission to assign specific roles to other users.\nSyntax: `@bot Let <Assigner_Role> [Not] Set <Other_Role_1> [<Other_Role_2 ...]`\n**ADMINS ONLY**",
-    execute(msg, args, options) {
+    /**
+     * The execute command
+     * @param {Discord.Message} msg 
+     * @param {Array<String>} args 
+     * @param {*} params 
+     */
+    execute(msg, args, params) {
         if (!msg.member.hasPermission('ADMINISTRATOR')) {
             throw new Error('User is not an admin.');
         }
@@ -79,7 +89,7 @@ module.exports = {
 
         // Finally save the assigner with its assignable roles to a list.
         // First, let's check if the assigner is already in the list
-        const listAssigner = options.listOfAssigns.find(x => x.assigner === assigner.id);
+        const listAssigner = params.assigns.find(x => x.assigner === assigner.id);
 
         if (listAssigner) { // Assigner role is already in the list. Just update the entry itself then.
             for (let i = 0; i < assignableRoles.length; i++) {
@@ -94,22 +104,23 @@ module.exports = {
 
             // Clear entries that have no assignable roles
             if (listAssigner.assignableRoles.length === 0) {
-                options.listOfAssigns = list.filter(x => x.assigner !== listAssigner.assigner);
+                params.assigns = list.filter(x => x.assigner !== listAssigner.assigner);
             }
         } else if (!isRemovingRoles) { // Assigner role isn't in the list yet. Also, can't remove roles from an assigner, if the assigner doesn't exist.
-        options.listOfAssigns.push({
+            params.assigns.push({
                 assigner: assigner.id,
                 assignableRoles: assignableRoles
             });
         } else return false; // If neither of these apply then just quit here
 
         // Update the list file to reflect the changes
-        fs.writeFile(file, JSON.stringify(options.listOfAssigns), 'utf8', (err) => {
+        fs.writeFile(file, JSON.stringify(params.assigns), 'utf8', (err) => {
             if (err) throw new Error('Couldn\'t write to the list.json file: ' + err);
         });
 
-        msg.reply('Permissions were successfully set.')
-
-        return true;
+        helpers.fetchassigns((res) => {
+            params.assigns = res;
+            msg.reply('Permissions were successfully set.');
+        });
     }
 }
