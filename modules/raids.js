@@ -306,7 +306,12 @@ function startSignUps(raid, members, raiderRole, params) {
         }
 
         // Just update roster
-        members.set(user.id, raid.guild.members.get(user.id));
+        const m = raid.guild.members.get(user.id);
+        members.set(user.id, {
+            id: m.id,
+            roles: m.roles,
+            displayName: m.displayName
+        });
         const editedContent = signUpRoster(raid, members, raiderRole, params);
         raid.edit(startmsg, { embed: editedContent });
     });
@@ -331,31 +336,37 @@ function startSignUps(raid, members, raiderRole, params) {
 
             messageCollector.on('collect', m => {
                 let isOk = true;
-                const args = m.content.trim().toUpperCase().split(' ');
+                const args = m.content.trim().toLowerCase().split(' ');
 
                 // Check the role
+                let role;
                 if(args.length === 3) {
                     switch(args[2]) {
-                        case 'TANK':
-                        case 'HEALER':
-                        case 'DPS':
+                        case 'tank':
+                        case 'healer':
+                        case 'dps':
+                            role = raid.guild.roles.find(r => r.name.toLowerCase() === args[2]);
                             break;
                         default:
                             isOk = false;
                             break;
                     }
+                } else {
+                    role = raid.guild.roles.find(r => r.name.toLowerCase() === 'dps');
                 }
 
                 // Check the class
+                let classrole;
                 switch(args[1]) {
-                    case 'MAGE':
-                    case 'DRUID':
-                    case 'HUNTER':
-                    case 'WARRIOR':
-                    case 'WARLOCK':
-                    case 'PRIEST':
-                    case 'SHAMAN':
-                    case 'ROGUE':
+                    case 'mage':
+                    case 'druid':
+                    case 'hunter':
+                    case 'warrior':
+                    case 'warlock':
+                    case 'priest':
+                    case 'shaman':
+                    case 'rogue':
+                        classrole = raid.guild.roles.find(r => r.name.toLowerCase() === args[1]);
                         break;
                     default:
                         isOk = false;
@@ -367,8 +378,19 @@ function startSignUps(raid, members, raiderRole, params) {
                     isOk = false;
                 } 
 
+                if (!classrole || !role) {
+                    isOk = false;
+                }
+
                 if (isOk) {
-                    members.set(user.id, raid.guild.members.get(user.id));
+                    const roles = new Discord.Collection();
+                    roles.set(classrole.id, classrole);
+                    roles.set(role.id, role);
+                    members.set(user.id, {
+                        id: user.id,
+                        roles: roles,
+                        displayName: args[0].replace(/^\w/, c => c.toUpperCase())
+                    });
                     const editedContent = signUpRoster(raid, members, raiderRole, params);
                     raid.edit(startmsg, { embed: editedContent });
 
