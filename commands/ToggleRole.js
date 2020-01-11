@@ -73,6 +73,8 @@ module.exports = {
             throw new Error(`You don\'t have the permission to toggle \`@${role.name}\``);
         }
 
+        msg.delete();
+
         return false;
     }
 }
