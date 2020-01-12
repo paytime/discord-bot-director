@@ -16,6 +16,7 @@ const prefix = [
 
 const helpers = require('./modules/helpers'); // Loads some helper functions
 const stats = require('./modules/statistics.js'); // Loads the statistics logic
+const raids = require('./modules/raids.js'); // Loads raids logic
 
 const params = {
     assigns: [],
@@ -30,6 +31,7 @@ bot.on('ready', () => {
     console.info(`Logged in as ${bot.user.tag}`);
 
     try {
+        // Check if the bot is fully setup
         helpers.checkbot(bot);
 
         console.info('Reading roles-assignment list...');
@@ -42,6 +44,10 @@ bot.on('ready', () => {
             params.roles = res;
             updateStats();
         });
+
+        // Checks active raids and restarts them
+        console.info('Checking if there are any active raids...');
+        raids.restartRaids(bot, params);
     } catch (err) {
         console.error(err);
         reconnect(false);

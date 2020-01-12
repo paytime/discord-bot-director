@@ -63,3 +63,4 @@ typings/
 # discord-bot-director specific
 assignments.json
 roles.json
+raids.json

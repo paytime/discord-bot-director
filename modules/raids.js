@@ -1,4 +1,6 @@
 'use strict';
+const fs = require('fs');
+const raidsFile = './config/raids.json';
 const Discord = require('discord.js');
 const iconURL = process.env.ICONURL;
 const empty = '\u200b';
@@ -6,6 +8,56 @@ const startmsg = 'Raid initiated';
 const autoSignUp = '✅';
 const manualSignUp = '#️⃣';
 const cancelSignUp = '❎';
+
+/**
+ * Restarts all still active raids
+ * @param {Discord.Client} bot 
+ * @param {*} params 
+ */
+function restartRaids(bot, params) {
+    retrieveRaids((raids) => {
+        // Remove old file and register again all raids
+        fs.unlink(raidsFile, (err) => {
+            if (err) {
+                throw new Error("Couldn't remove raids file");
+            }
+
+            // Check if the entries are still valid. If yes, register raid
+            raids.forEach(entry => {
+                const guild = bot.guilds.get(entry.guild);
+                if (!guild || guild === null) return;
+
+                const channel = guild.channels.get(entry.channel);
+                if (!channel || channel === null) return;
+
+                const role = guild.roles.get(entry.raiderRole);
+                if (!role || role === null) return;
+
+                channel.fetchMessage(entry.raid)
+                    .then(raid => {
+                        // Check if members are still valid
+                        const members = new Discord.Collection();
+                        for (let i = 0; i < entry.members.length; i++) {
+                            const member = guild.members.get(entry.members[i].id);
+                            if (member) {
+                                members.set(member.id, {
+                                    id: member.id,
+                                    roles: member.roles,
+                                    displayName: member.displayName
+                                });
+                            }
+                        }
+
+                        console.log(`Found raid '${entry.raid}' - Restarting...`);
+                        registerRaid(raid, members, entry.raiderRole, params, true);
+                    })
+                    .catch(() => {
+                        console.info(`Removing cancelled raid '${entry.raid}'`);
+                    });
+            });
+        });
+    });
+}
 
 /**
  * Checks if the user has permission with mess with raids and return the user's raider role.
@@ -274,6 +326,85 @@ function signUpRoster(msg, members, raiderRole, params) {
 }
 
 /**
+ * Retrieves all active raids
+ * @param {*} fn 
+ */
+function retrieveRaids(fn) {
+    fs.readFile(raidsFile, { encoding: 'utf8', flag: 'a+' }, (err, data) => {
+        if (err) {
+            throw new Error("Failed to read file raids.json: " + err);
+        }
+
+        let parsedData;
+
+        try {
+            if (data && data !== "{}") {
+                parsedData = JSON.parse(data);
+            }
+        } catch (err) {
+            throw new Error("Failed to parse raids-file: " + err);
+        }
+
+        let map = new Discord.Collection();
+
+        // Apply data to collection. Raid ID's are to be set as keys
+        try {
+            if (parsedData && parsedData !== {} && parsedData.length > 0) {
+                for (let i = 0; i < parsedData.length; i++) {
+                    const entry = parsedData[i];
+                    map.set(entry.raid, entry);
+                }
+            }
+        } catch (err) {
+            throw new Error('Cannot apply raids data: ' + err);
+        }
+
+        // Callback
+        fn(map);
+    });
+}
+
+/**
+ * Saves a raid and starts it if specified
+ * @param {Discord.Message} raid 
+ * @param {Discord.Collection<String, Discord.GuildMember>} members 
+ * @param {*} raiderRole 
+ * @param {*} params 
+ * @param {*} start 
+ */
+function registerRaid(raid, members, raiderRole, params, start) {
+    retrieveRaids((raids) => { // Retrieve the raids map first
+        // Prepare members roles
+        /*const prepMembers = members.array();
+        for (let i = 0; i < prepMembers.length; i++) {
+            prepMembers[i].roles = Array.from(prepMembers[i].roles.keys());
+        }*/
+
+        // Prepare entry
+        const entry = {
+            raid: raid.id,
+            channel: raid.channel.id,
+            guild: raid.guild.id,
+            members: members.array(),
+            raiderRole: raiderRole
+        }
+
+        // Add to map
+        raids.set(raid.id, entry);
+
+        // Write to file
+        fs.writeFile(raidsFile, JSON.stringify(raids.array()), 'utf8', (err) => {
+            if (err) {
+                throw new Error('Failed to write to raids-file: ' + err);
+            }
+
+            // Finally, start the raid
+            if (start) startSignUps(raid, members, raiderRole, params);
+        });
+    });
+}
+
+/**
  * Starts the sign up process of the raid
  * @param {Discord.Message} raid 
  * @param {Discord.Collection<String, Discord.GuildMember>} members 
@@ -307,13 +438,17 @@ function startSignUps(raid, members, raiderRole, params) {
 
         // Just update roster
         const m = raid.guild.members.get(user.id);
+        members.delete(user.id);
         members.set(user.id, {
             id: m.id,
             roles: m.roles,
-            displayName: m.displayName
+            displayName: m.displayName + ` \`${members.size + 1}\``
         });
         const editedContent = signUpRoster(raid, members, raiderRole, params);
         raid.edit(startmsg, { embed: editedContent });
+
+        // Save the raid
+        registerRaid(raid, members, raiderRole, params, false);
     });
 
     manualCollector.on('collect', react => {
@@ -330,7 +465,7 @@ function startSignUps(raid, members, raiderRole, params) {
         // If the user has chosen the manual sign up, he/she will receive a DM asking what his name, class and role is. This will be then added to the raid list
         user.createDM().then(dm => {
             dm.send('**You have chosen to manually sign up for the raid.** Please tell me your ingame name, your class and your role (Tank or Healer) if you are not DPS.\nExample: `Paytime Druid Healer` or `Poortime Mage`');
-            
+
             const filter = m => m.content.trim().length > 5 && m.content.trim().length < 50 && (m.content.trim().split(' ').length === 2 || m.content.trim().split(' ').length === 3);
             const messageCollector = dm.createMessageCollector(filter, { time: 120000 });
 
@@ -340,8 +475,8 @@ function startSignUps(raid, members, raiderRole, params) {
 
                 // Check the role
                 let role;
-                if(args.length === 3) {
-                    switch(args[2]) {
+                if (args.length === 3) {
+                    switch (args[2]) {
                         case 'tank':
                         case 'healer':
                         case 'dps':
@@ -357,7 +492,7 @@ function startSignUps(raid, members, raiderRole, params) {
 
                 // Check the class
                 let classrole;
-                switch(args[1]) {
+                switch (args[1]) {
                     case 'mage':
                     case 'druid':
                     case 'hunter':
@@ -374,9 +509,9 @@ function startSignUps(raid, members, raiderRole, params) {
                 }
 
                 // Check if the player's name is not too long or too short
-                if(args[0].length > 12 && args[0].length < 2) { 
+                if (args[0].length > 12 && args[0].length < 2) {
                     isOk = false;
-                } 
+                }
 
                 if (!classrole || !role) {
                     isOk = false;
@@ -386,6 +521,7 @@ function startSignUps(raid, members, raiderRole, params) {
                     const roles = new Discord.Collection();
                     roles.set(classrole.id, classrole);
                     roles.set(role.id, role);
+                    members.delete(user.id);
                     members.set(user.id, {
                         id: user.id,
                         roles: roles,
@@ -396,6 +532,9 @@ function startSignUps(raid, members, raiderRole, params) {
 
                     messageCollector.stop();
                     dm.send('👌');
+
+                    // Save the raid
+                    registerRaid(raid, members, raiderRole, params, false);
                 } else {
                     dm.send('The input is invalid. Try again!');
                 }
@@ -409,7 +548,7 @@ function startSignUps(raid, members, raiderRole, params) {
         if (manualCollector.collected.first() && manualCollector.collected.first().users.has(user.id)) {
             manualCollector.collected.first().remove(user.id);
         }
-        
+
         if (autoCollector.collected.first() && autoCollector.collected.first().users.has(user.id)) {
             autoCollector.collected.first().remove(user.id);
         }
@@ -419,11 +558,10 @@ function startSignUps(raid, members, raiderRole, params) {
         if (res) {
             const editedContent = signUpRoster(raid, members, raiderRole, params);
             raid.edit(startmsg, { embed: editedContent });
-        }
-    });
 
-    autoCollector.on('end', r => {
-        console.log('thats it');
+            // Save the raid
+            registerRaid(raid, members, raiderRole, params, false);
+        }
     });
 }
 
@@ -435,7 +573,9 @@ module.exports = {
     startmsg: startmsg,
     raiderRole: fetchRaiderRole,
     iconURL: iconURL,
+    restartRaids: restartRaids,
     roster: roster,
+    registerRaid: registerRaid,
     signUpRoster: signUpRoster,
     startSignUps: startSignUps
 };

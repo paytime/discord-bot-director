@@ -21,10 +21,11 @@ module.exports = {
         // Add react messages
         msg.channel.send(raids.startmsg, { embed: content })
             .then((raid) => {
+                raid.pin(); // Pin the message on the channel
                 raid.react(raids.autoSignUp)
                     .then(raid.react(raids.manualSignUp)
                         .then(raid.react(raids.cancelSignUp)
-                            .then(raids.startSignUps(raid, members, raiderRole, params))));
+                            .then(raids.registerRaid(raid, members, raiderRole, params, true))));
             });
     }
 }
