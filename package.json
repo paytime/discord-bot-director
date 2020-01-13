@@ -18,6 +18,8 @@
   },
   "homepage": "https://github.com/paytime/discord-bot-director#readme",
   "dependencies": {
+    "buffer": "^5.4.3",
+    "dateformat": "^3.0.3",
     "discord.js": "^11.5.1",
     "dotenv": "^8.2.0"
   }

@@ -8,6 +8,7 @@ const serverId = process.env.SERVERID;
 const channelId = process.env.CHANNELID;
 const invchannelId = process.env.INVCHANNELID;
 const botId = process.env.BOTID;
+const dbchannelId = process.env.DBCHANNELID;
 
 /**
  * Read the list file and launch the bot
@@ -59,6 +60,14 @@ function checkbot(bot) {
 
     if (!guild) {
         throw new Error('Could not find specified guild!');
+    }
+
+    console.info('Trying to find my database channel...');
+
+    let dbchannel = guild.channels.get(dbchannelId);
+
+    if (!dbchannel) {
+        throw new Error('Could not find database channel!');
     }
 
     console.info('Trying to find statistics channel...');

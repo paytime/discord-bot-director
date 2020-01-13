@@ -1,13 +1,16 @@
 'use strict';
-const fs = require('fs');
-const raidsFile = './config/raids.json';
 const Discord = require('discord.js');
+const df = require('dateformat');
 const iconURL = process.env.ICONURL;
 const empty = '\u200b';
-const startmsg = 'Raid initiated';
+const startmsg = (ref, raiderRole) => {
+    return `ID: ${ref} - <@&${raiderRole}>`;
+};
 const autoSignUp = '✅';
 const manualSignUp = '#️⃣';
 const cancelSignUp = '❎';
+
+const db = require('./db');
 
 /**
  * Restarts all still active raids
@@ -15,27 +18,32 @@ const cancelSignUp = '❎';
  * @param {*} params 
  */
 function restartRaids(bot, params) {
-    retrieveRaids((raids) => {
-        // Remove old file and register again all raids
-        fs.unlink(raidsFile, (err) => {
-            if (err) {
-                throw new Error("Couldn't remove raids file");
-            }
+    // Go through each signup channel and check for signup posts
+    for (let i = 0; i < params.roles.raiders.list.length; i++) {
+        const raidInfo = params.roles.raiders.list[i];
 
-            // Check if the entries are still valid. If yes, register raid
-            raids.forEach(entry => {
-                const guild = bot.guilds.get(entry.guild);
-                if (!guild || guild === null) return;
+        if (!raidInfo.signups) {
+            continue;
+        }
 
-                const channel = guild.channels.get(entry.channel);
-                if (!channel || channel === null) return;
+        const guild = bot.guilds.get(process.env.SERVERID);
+        if (!guild) {
+            continue;
+        }
 
-                const role = guild.roles.get(entry.raiderRole);
-                if (!role || role === null) return;
+        const signUpChannel = guild.channels.get(raidInfo.signups);
 
-                channel.fetchMessage(entry.raid)
-                    .then(raid => {
-                        // Check if members are still valid
+        if (!signUpChannel) {
+            continue;
+        }
+
+        signUpChannel.fetchMessages({ limit: 5 })
+            .then(messages => messages.forEach(raid => {
+                if (raid.author === bot.user || raid.content.startsWith('ID:')) {
+                    const ref = raid.content.split('-')[0].trim().slice(4);
+                    db.pull(bot, ref, (entry) => {
+                        console.info(`Restarting raid '${entry.raid}'`);
+
                         const members = new Discord.Collection();
                         for (let i = 0; i < entry.members.length; i++) {
                             const member = guild.members.get(entry.members[i].id);
@@ -48,24 +56,21 @@ function restartRaids(bot, params) {
                             }
                         }
 
-                        console.log(`Found raid '${entry.raid}' - Restarting...`);
-                        registerRaid(raid, members, entry.raiderRole, params, true);
-                    })
-                    .catch(() => {
-                        console.info(`Removing cancelled raid '${entry.raid}'`);
+                        //Restart the raid
+                        startSignUps(raid, members, entry.raiderRole, params, new Date(entry.date), ref);
                     });
-            });
-        });
-    });
+                }
+            }));
+    }
 }
 
 /**
  * Checks if the user has permission with mess with raids and return the user's raider role.
  * @param {Discord.Message} msg 
- * @param {Array<String>} args 
+ * @param {String} str 
  * @param {*} params 
  */
-function fetchRaiderRole(msg, args, params) {
+function fetchRaiderRole(msg, str, params) {
     const leaderRoleId = params.roles.raiders.leader;
     const assistRoleId = params.roles.raiders.assist;
 
@@ -73,15 +78,15 @@ function fetchRaiderRole(msg, args, params) {
         throw new Error('You do not have the permission to use this command.');
     }
 
-    // Check if first argument is a raider role, otherwise take user's raider role
+    // Check if the input is a raider role or emoji, otherwise take user's raider role
     let raiderRole;
-    if (args && args.length > 0 && args[0].startsWith('<@&') && args[0].endsWith('>')) {
-        const roleId = args[0].slice(3, -1);
-
-        if (params.roles.raiders.list.some(x => x.id === roleId)) {
-            raiderRole = roleId;
-        } else {
-            throw new Error('Role is not a raider role.');
+    if (str) {
+        for (let i = 0; i < params.roles.raiders.list.length; i++) {
+            const x = params.roles.raiders.list[i];
+            if (x.emoji === str || x.id === str.slice(3, -1)) {
+                raiderRole = x.id;
+                break;
+            }
         }
     } else {
         // Find the user's first raider role
@@ -99,6 +104,10 @@ function fetchRaiderRole(msg, args, params) {
         }
     }
 
+    if (!raiderRole) {
+        throw new Error('Inavlid raider role.');
+    }
+
     return raiderRole;
 }
 
@@ -108,10 +117,20 @@ function fetchRaiderRole(msg, args, params) {
  * @param {Discord.Collection<String, Discord.GuildMember>} members 
  * @param {*} raiderRole 
  * @param {*} params 
+ * @param {Date} date 
  */
-function roster(msg, members, raiderRole, params) {
+function roster(msg, members, raiderRole, params, date) {
     // Get the raid's info
     const raidInfo = params.roles.raiders.list.find(x => x.id === raiderRole);
+
+    let days, schedule;
+    if (date) {
+        days = df(date, 'dd-mm-yyyy');
+        schedule = df(date, 'HH:MM');
+    } else {
+        days = raidInfo.days;
+        schedule = raidInfo.schedule;
+    }
 
     // Find the raid's leader and assists
     const raidLeader = msg.guild.members.find(member => member.roles.has(raiderRole) && member.roles.has(params.roles.raiders.leader));
@@ -209,12 +228,12 @@ function roster(msg, members, raiderRole, params) {
         },
         {
             name: empty,
-            value: `**📅 ${raidInfo.days}**`,
+            value: `**📅 ${days}**`,
             inline: true
         },
         {
             name: empty,
-            value: `**🕒 ${raidInfo.schedule}**`,
+            value: `**🕒 ${schedule}**`,
             inline: true
         },
         {
@@ -310,10 +329,11 @@ function roster(msg, members, raiderRole, params) {
  * @param {Discord.Collection<String, Discord.GuildMember>} members 
  * @param {*} raiderRole 
  * @param {*} params 
+ * @param {*} date 
  */
-function signUpRoster(msg, members, raiderRole, params) {
+function signUpRoster(msg, members, raiderRole, params, date) {
     // Creates a raid window
-    const content = roster(msg, members, raiderRole, params);
+    const content = roster(msg, members, raiderRole, params, date);
 
     // Append the info about the sign up emojis
     content.fields.push({
@@ -326,92 +346,22 @@ function signUpRoster(msg, members, raiderRole, params) {
 }
 
 /**
- * Retrieves all active raids
- * @param {*} fn 
- */
-function retrieveRaids(fn) {
-    fs.readFile(raidsFile, { encoding: 'utf8', flag: 'a+' }, (err, data) => {
-        if (err) {
-            throw new Error("Failed to read file raids.json: " + err);
-        }
-
-        let parsedData;
-
-        try {
-            if (data && data !== "{}") {
-                parsedData = JSON.parse(data);
-            }
-        } catch (err) {
-            throw new Error("Failed to parse raids-file: " + err);
-        }
-
-        let map = new Discord.Collection();
-
-        // Apply data to collection. Raid ID's are to be set as keys
-        try {
-            if (parsedData && parsedData !== {} && parsedData.length > 0) {
-                for (let i = 0; i < parsedData.length; i++) {
-                    const entry = parsedData[i];
-                    map.set(entry.raid, entry);
-                }
-            }
-        } catch (err) {
-            throw new Error('Cannot apply raids data: ' + err);
-        }
-
-        // Callback
-        fn(map);
-    });
-}
-
-/**
- * Saves a raid and starts it if specified
- * @param {Discord.Message} raid 
- * @param {Discord.Collection<String, Discord.GuildMember>} members 
- * @param {*} raiderRole 
- * @param {*} params 
- * @param {*} start 
- */
-function registerRaid(raid, members, raiderRole, params, start) {
-    retrieveRaids((raids) => { // Retrieve the raids map first
-        // Prepare members roles
-        /*const prepMembers = members.array();
-        for (let i = 0; i < prepMembers.length; i++) {
-            prepMembers[i].roles = Array.from(prepMembers[i].roles.keys());
-        }*/
-
-        // Prepare entry
-        const entry = {
-            raid: raid.id,
-            channel: raid.channel.id,
-            guild: raid.guild.id,
-            members: members.array(),
-            raiderRole: raiderRole
-        }
-
-        // Add to map
-        raids.set(raid.id, entry);
-
-        // Write to file
-        fs.writeFile(raidsFile, JSON.stringify(raids.array()), 'utf8', (err) => {
-            if (err) {
-                throw new Error('Failed to write to raids-file: ' + err);
-            }
-
-            // Finally, start the raid
-            if (start) startSignUps(raid, members, raiderRole, params);
-        });
-    });
-}
-
-/**
  * Starts the sign up process of the raid
  * @param {Discord.Message} raid 
  * @param {Discord.Collection<String, Discord.GuildMember>} members 
- * @param {*} raiderRole 
+ * @param {String} raiderRole 
  * @param {*} params 
+ * @param {Date} date 
+ * @param {String} ref 
  */
-function startSignUps(raid, members, raiderRole, params) {
+function startSignUps(raid, members, raiderRole, params, date, ref) {
+    const curDate = new Date();
+
+    if (curDate.getTime() > date.getTime()) { // If the event ran out remove the message
+        raid.delete();
+        return;
+    }
+
     // Only members of this raid group will get considered
     const autoFilter = (react, user) => react.emoji.name === autoSignUp
         && raid.guild.members.filter(member => member.roles.has(raiderRole)).has(user.id);
@@ -445,10 +395,18 @@ function startSignUps(raid, members, raiderRole, params) {
             displayName: m.displayName + ` \`${members.size + 1}\``
         });
         const editedContent = signUpRoster(raid, members, raiderRole, params);
-        raid.edit(startmsg, { embed: editedContent });
+        raid.edit(startmsg(ref, raiderRole), { embed: editedContent });
 
-        // Save the raid
-        registerRaid(raid, members, raiderRole, params, false);
+        // Store the data
+        const entry = JSON.stringify({
+            raid: raid.id,
+            channel: raid.channel.id,
+            guild: raid.guild.id,
+            raiderRole: raiderRole,
+            date: date,
+            members: members.array()
+        });
+        db.push(raid.client, ref, entry);
     });
 
     manualCollector.on('collect', react => {
@@ -528,13 +486,21 @@ function startSignUps(raid, members, raiderRole, params) {
                         displayName: args[0].replace(/^\w/, c => c.toUpperCase()) + ` \`${members.size + 1}\``
                     });
                     const editedContent = signUpRoster(raid, members, raiderRole, params);
-                    raid.edit(startmsg, { embed: editedContent });
+                    raid.edit(startmsg(ref, raiderRole), { embed: editedContent });
 
                     messageCollector.stop();
                     dm.send('👌');
 
-                    // Save the raid
-                    registerRaid(raid, members, raiderRole, params, false);
+                    // Store the data
+                    const entry = JSON.stringify({
+                        raid: raid.id,
+                        channel: raid.channel.id,
+                        guild: raid.guild.id,
+                        raiderRole: raiderRole,
+                        date: date,
+                        members: members.array()
+                    });
+                    db.push(raid.client, ref, entry);
                 } else {
                     dm.send('The input is invalid. Try again!');
                 }
@@ -557,12 +523,100 @@ function startSignUps(raid, members, raiderRole, params) {
         const res = members.delete(user.id);
         if (res) {
             const editedContent = signUpRoster(raid, members, raiderRole, params);
-            raid.edit(startmsg, { embed: editedContent });
+            raid.edit(startmsg(ref, raiderRole), { embed: editedContent });
 
-            // Save the raid
-            registerRaid(raid, members, raiderRole, params, false);
+            // Store the data
+            const entry = JSON.stringify({
+                raid: raid.id,
+                channel: raid.channel.id,
+                guild: raid.guild.id,
+                raiderRole: raiderRole,
+                date: date,
+                members: members.array()
+            });
+            db.push(raid.client, ref, entry);
         }
     });
+}
+
+/**
+ * Get the date and time from a string of the format dd-mm-yyyy/HH:MM
+ * @param {*} str
+ */
+function getdate(str) {
+    const formaterr = "Invalid Date. The correct format is: `dd-mm-yyyy/HH:MM`. Example: `20-05-2020/19:30`";
+    let split = str.split('/');
+
+    if (!split || split.length !== 2) {
+        throw new Error(formaterr);
+    }
+
+    let dateString = split[0].split('-');
+    let timeString = split[1].split(':');
+
+    if (!dateString || !timeString || dateString.length !== 3 || timeString.length !== 2) {
+        throw new Error(formaterr);
+    }
+
+    let date;
+
+    try {
+        date = new Date(dateString[2], dateString[1], dateString[0], timeString[0], timeString[1]);
+    } catch {
+        throw new Error(formaterr);
+    }
+
+    if (!date) {
+        throw new Error(formaterr);
+    }
+
+    return date;
+}
+
+/**
+ * Creates the raid event
+ * @param {Discord.Message} msg 
+ * @param {String} raiderRole 
+ * @param {*} params 
+ * @param {Date} date 
+ */
+function createRaidEvent(msg, raiderRole, params, date) {
+    // First check if the raider role has a channel assigned and if all other parameters are still valid
+    const param = params.roles.raiders.list.find(x => x.id === raiderRole);
+
+    if (!param || !param.signups) {
+        throw new Error('Invalid configuration.');
+    }
+
+    const signUpChannel = msg.guild.channels.get(param.signups);
+
+    if (!signUpChannel) {
+        throw new Error('Cannot find Sign-Up channel for this raid group.');
+    }
+
+    const content = signUpRoster(msg, new Discord.Collection(), raiderRole, params, date);
+
+    signUpChannel.send('Working...')
+        .then((raid) => {
+            // prepare entry
+            const entry = JSON.stringify({
+                raid: raid.id,
+                channel: raid.channel.id,
+                guild: raid.guild.id,
+                raiderRole: raiderRole,
+                date: date,
+                members: []
+            });
+
+            // Store data in db and then start the raid
+            db.commit(msg.client, entry, (ref) => {
+                raid.edit(startmsg(ref, raiderRole), { embed: content })
+                    .then(raid.react(autoSignUp)
+                        .then(raid.react(manualSignUp)
+                            .then(raid.react(cancelSignUp)
+                                .then(startSignUps(raid, new Discord.Collection(), raiderRole, params, date, ref)))));
+            });
+        });
 }
 
 module.exports = {
@@ -573,9 +627,10 @@ module.exports = {
     startmsg: startmsg,
     raiderRole: fetchRaiderRole,
     iconURL: iconURL,
-    restartRaids: restartRaids,
     roster: roster,
-    registerRaid: registerRaid,
     signUpRoster: signUpRoster,
-    startSignUps: startSignUps
+    startSignUps: startSignUps,
+    restartRaids: restartRaids,
+    getdate: getdate,
+    createRaidEvent: createRaidEvent
 };

@@ -37,24 +37,24 @@ bot.on('ready', () => {
         console.info('Reading roles-assignment list...');
         helpers.fetchassigns((res) => {
             params.assigns = res;
-        });
 
-        console.info('Loading roles...');
-        helpers.fetchroles((res) => {
-            params.roles = res;
-            updateStats();
-        });
+            console.info('Loading roles...');
+            helpers.fetchroles((res) => {
+                params.roles = res;
+                updateStats();
 
-        // Checks active raids and restarts them
-        console.info('Checking if there are any active raids...');
-        raids.restartRaids(bot, params);
+                // Checks active raids and restarts them
+                console.info('Checking if there are any active raids...');
+                raids.restartRaids(bot, params);
+
+                console.info('SUCCESS');
+            });
+        });
     } catch (err) {
         console.error(err);
         reconnect(false);
         return;
     }
-
-    console.info('SUCCESS');    
 });
 
 function updateStats() {
