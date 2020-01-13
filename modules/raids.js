@@ -394,7 +394,7 @@ function startSignUps(raid, members, raiderRole, params, date, ref) {
             roles: m.roles,
             displayName: m.displayName + ` \`${members.size + 1}\``
         });
-        const editedContent = signUpRoster(raid, members, raiderRole, params);
+        const editedContent = signUpRoster(raid, members, raiderRole, params, date);
         raid.edit(startmsg(ref, raiderRole), { embed: editedContent });
 
         // Store the data
@@ -485,7 +485,7 @@ function startSignUps(raid, members, raiderRole, params, date, ref) {
                         roles: roles,
                         displayName: args[0].replace(/^\w/, c => c.toUpperCase()) + ` \`${members.size + 1}\``
                     });
-                    const editedContent = signUpRoster(raid, members, raiderRole, params);
+                    const editedContent = signUpRoster(raid, members, raiderRole, params, date);
                     raid.edit(startmsg(ref, raiderRole), { embed: editedContent });
 
                     messageCollector.stop();
@@ -522,7 +522,7 @@ function startSignUps(raid, members, raiderRole, params, date, ref) {
         // Remove user from roster and edit content
         const res = members.delete(user.id);
         if (res) {
-            const editedContent = signUpRoster(raid, members, raiderRole, params);
+            const editedContent = signUpRoster(raid, members, raiderRole, params, date);
             raid.edit(startmsg(ref, raiderRole), { embed: editedContent });
 
             // Store the data
