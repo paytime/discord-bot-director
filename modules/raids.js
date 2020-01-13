@@ -40,10 +40,10 @@ function restartRaids(bot, params) {
                         for (let i = 0; i < entry.members.length; i++) {
                             const member = guild.members.get(entry.members[i].id);
                             if (member) {
-                                members.set(member.id, {
-                                    id: member.id,
+                                members.set(entry.members[i].id, {
+                                    id: entry.members[i].id,
                                     roles: member.roles,
-                                    displayName: member.displayName
+                                    displayName: entry.members[i].displayName
                                 });
                             }
                         }
