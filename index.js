@@ -57,8 +57,8 @@ bot.on('ready', () => {
     }
 });
 
-bot.on('disconnect', (err, code) => {
-    console.info(`Bot was disconnected with code ${code}, reason: ${err}`);
+bot.on('disconnect', (closeEvent) => {
+    console.info(`Bot was disconnected with code ${closeEvent.code}, reason: ${closeEvent.reason}`);
     reconnect(false);
 });
 
