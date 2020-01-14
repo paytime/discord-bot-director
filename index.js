@@ -57,6 +57,11 @@ bot.on('ready', () => {
     }
 });
 
+bot.on('disconnect', (err, code) => {
+    console.info(`Bot was disconnected with code ${code}, reason: ${err}`);
+    reconnect(false);
+});
+
 function updateStats() {
     stats.update(bot, params.roles, (res) => {
         params.statsmsg = res;
