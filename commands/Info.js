@@ -11,10 +11,6 @@ module.exports = {
      * @param {*} params 
      */
     execute(msg, args, params) {
-        if (!msg.member.hasPermission('ADMINISTRATOR')) {
-            throw new Error('User is not an admin.');
-        }
-
         if (args.length > 1) {
             throw new Error('Invalid args');
         }
@@ -49,7 +45,7 @@ module.exports = {
 
             msg.reply(`\`@${role.name}\` can assign the role(s): \`\`\`${roleNames.join('\n')}\`\`\``);
         } else { // Explain this bot's functionality
-            msg.reply("\nI am a **simple role assingment bot** for Discord. Administrators can define which role(s) can be (un)assigned by other roles.\nCommands:\n- `Info`\n- `Let`\n- `Toggle`\n- `ExportList`\nType `?<command>` (without < and >) to get the description for a command.\nYou can also type `info @Role` to see what permissions this role has.");
+            msg.reply("\nI am a **role assingment and raid helper bot** for Discord. Administrators can define which role(s) can be (un)assigned by other roles.\nCommands:\n- `Info`\n- `Let`\n- `Toggle`\n- `ExportList`\nType `?<command>` (without < and >) to get the description for a command.\nYou can also type `info @Role` to see what permissions this role has.");
         }
     }
 }

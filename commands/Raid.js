@@ -23,7 +23,7 @@ module.exports = {
         const date = raids.getdate(args[0]);
 
         // Third, determine the raider role
-        const raiderRole = raids.raiderRole(msg, args[1], params);
+        const raiderRole = raids.raiderRole(msg, args[1], params, false);
 
         // Create the message and add reactions
         raids.createRaidEvent(msg, raiderRole, params, date);

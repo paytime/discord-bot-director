@@ -12,15 +12,13 @@ module.exports = {
      * @param {*} params 
      */
     execute(msg, args, params) {
-        msg.reply('Feature deprecated for now.');
-        //TODO: For now deprecated.
-        /*let str;
+        let str;
         if (args && args.length > 0) {
             str = args[0];
         }
 
         // Get the user's raider role
-        const raiderRole = raids.raiderRole(msg, str, params);
+        const raiderRole = raids.raiderRole(msg, str, params, false);
 
         // Find and store everyone with the raider role
         const members = new Discord.Collection();
@@ -36,6 +34,6 @@ module.exports = {
         // Post the raid roster
         const content = raids.roster(msg, members, raiderRole, params);
 
-        msg.channel.send({ embed: content });*/
+        msg.channel.send({ embed: content });
     }
 }

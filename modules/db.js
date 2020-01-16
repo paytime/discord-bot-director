@@ -8,6 +8,8 @@ const serverId = process.env.SERVERID;
 
 const wip = 'Working...';
 
+const empty = '\u200b';
+
 /**
  * Stores data in the databse
  * @param {Discord.Client} bot 
@@ -28,7 +30,9 @@ function storeData(bot, data, result) {
     }).then(msg => {
         // The data will be split up if too big. The references to the chunks will then be stored in the original message
         c.send(base64, {
-            split: true
+            split: {
+                char: empty
+            }
         }).then(chunks => {
             let refs;
             if (Array.isArray(chunks)) {

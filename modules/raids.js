@@ -37,30 +37,47 @@ function restartRaids(bot, params) {
             continue;
         }
 
-        signUpChannel.fetchMessages({ limit: 5 })
-            .then(messages => messages.forEach(raid => {
-                if (raid.author === bot.user || raid.content.startsWith('ID:')) {
-                    const ref = raid.content.split('-')[0].trim().slice(4);
-                    db.pull(bot, ref, (entry) => {
-                        console.info(`Restarting raid '${entry.raid}'`);
+        signUpChannel.fetchMessages()
+            .then(messages => {
+                if (Array.isArray(messages.array())) {
+                    messages.forEach(raid => {
+                        restartRaid(bot, raid, guild, params);
+                    })
+                } else {
+                    restartRaid(bot, messages, guild, params);
+                }
+            });
+    }
+}
 
-                        const members = new Discord.Collection();
-                        for (let i = 0; i < entry.members.length; i++) {
-                            const member = guild.members.get(entry.members[i].id);
-                            if (member) {
-                                members.set(entry.members[i].id, {
-                                    id: entry.members[i].id,
-                                    roles: member.roles,
-                                    displayName: entry.members[i].displayName
-                                });
-                            }
-                        }
+/**
+ * Restarts a single raid
+ * @param {Discord.Client} bot 
+ * @param {Discord.Message} raid 
+ * @param {Discord.Guild} guild 
+ * @param {*} params 
+ */
+function restartRaid(bot, raid, guild, params) {
+    if (raid.author === bot.user && raid.content.startsWith('ID:')) {
+        const ref = raid.content.split('-')[0].trim().slice(4);
+        db.pull(bot, ref, (entry) => {
+            console.info(`Restarting raid '${entry.raid}'`);
 
-                        //Restart the raid
-                        startSignUps(raid, members, entry.raiderRole, params, new Date(entry.date), ref);
+            const members = new Discord.Collection();
+            for (let i = 0; i < entry.members.length; i++) {
+                const member = guild.members.get(entry.members[i].id);
+                if (member) {
+                    members.set(entry.members[i].id, {
+                        id: entry.members[i].id,
+                        roles: member.roles,
+                        displayName: entry.members[i].displayName
                     });
                 }
-            }));
+            }
+
+            //Restart the raid
+            startSignUps(raid, members, entry.raiderRole, params, new Date(entry.date), ref);
+        });
     }
 }
 
@@ -69,13 +86,16 @@ function restartRaids(bot, params) {
  * @param {Discord.Message} msg 
  * @param {String} str 
  * @param {*} params 
+ * @param {Boolean} specialperms
  */
-function fetchRaiderRole(msg, str, params) {
+function fetchRaiderRole(msg, str, params, specialperms) {
     const leaderRoleId = params.roles.raiders.leader;
     const assistRoleId = params.roles.raiders.assist;
 
-    if (!msg.member.hasPermission('ADMINISTRATOR') && !msg.member.roles.has(leaderRoleId) && !msg.member.roles.has(assistRoleId)) {
-        throw new Error('You do not have the permission to use this command.');
+    if (specialperms) {
+        if (!msg.member.hasPermission('ADMINISTRATOR') && !msg.member.roles.has(leaderRoleId) && !msg.member.roles.has(assistRoleId)) {
+            throw new Error('You do not have the permission to use this command.');
+        }
     }
 
     // Check if the input is a raider role or emoji, otherwise take user's raider role
@@ -312,9 +332,6 @@ function roster(msg, members, raiderRole, params, date) {
         title: `${raidInfo.emoji} Raid ${raidInfo.name}`,
         description: `**Leader:** ${raidLeader}\n**Assistants:** ${raidAssists}`,
         color: 16715264,
-        thumbnail: {
-            url: iconURL
-        },
         fields: fields,
         footer: {
             icon_url: iconURL,
@@ -561,7 +578,7 @@ function getdate(str) {
     let date;
 
     try {
-        date = new Date(dateString[2], dateString[1], dateString[0], timeString[0], timeString[1]);
+        date = new Date(parseInt(dateString[2]), parseInt(dateString[1] - 1), parseInt(dateString[0]), parseInt(timeString[0]), parseInt(timeString[1]));
     } catch {
         throw new Error(formaterr);
     }

@@ -73,10 +73,10 @@ module.exports = {
         if (hasPermission) {
             if (player.roles.has(roleId)) {
                 player.removeRole(role);
-                msg.reply(`\`@${role.name}\` has been removed from \`${player.user.username}\``);
+                msg.reply(`\`@${role.name}\` has been removed from \`${player.displayName}\``);
             } else {
                 player.addRole(role);
-                msg.reply(`\`@${role.name}\` has been assigned to \`${player.user.username}\``);
+                msg.reply(`\`@${role.name}\` has been assigned to \`${player.displayName}\``);
             }
         } else {
             throw new Error(`You don\'t have the permission to toggle \`@${role.name}\``);
