@@ -72,8 +72,9 @@ function updateData(bot, ref, data) {
     c.fetchMessage(ref).then(msg => {
         // Delete the old references
         msg.embeds[0].description.split('\n').forEach((o => {
-            const m = c.messages.get(o);
-            if (m) m.delete();
+            c.fetchMessage(o).then(m => {
+                m.delete();
+            });
         }));
 
         c.send(base64, {
