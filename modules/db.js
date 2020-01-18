@@ -8,7 +8,7 @@ const serverId = process.env.SERVERID;
 
 const wip = 'Working...';
 
-const empty = '\u200b';
+const splitChar = '*';
 
 /**
  * Stores data in the databse
@@ -20,7 +20,11 @@ function storeData(bot, data, result) {
     const c = checkValidChannel(bot);
 
     // Encode the data
-    const base64 = Buffer.from(data, 'utf8').toString('base64');
+    let base64 = Buffer.from(data, 'utf8').toString('base64');
+
+    if (base64.length > 1950) {
+        base64 = addSplitChars(base64, 1940);
+    }
 
     c.send({
         embed: {
@@ -31,7 +35,7 @@ function storeData(bot, data, result) {
         // The data will be split up if too big. The references to the chunks will then be stored in the original message
         c.send(base64, {
             split: {
-                char: empty
+                char: splitChar
             }
         }).then(chunks => {
             let refs;
@@ -64,6 +68,21 @@ function storeData(bot, data, result) {
 }
 
 /**
+ * Adds a split character every n characters
+ * @param {*} str 
+ * @param {*} n 
+ */
+function addSplitChars(str, n) {
+    let ret = [];
+    let i, len;
+
+    for (i = 0, len = str.length; i < len; i += n) {
+        ret.push(str.substring(i, n));
+    }
+    return ret.join(splitChar);
+}
+
+/**
  * Updates existing data
  * @param {Discord.Client} bot 
  * @param {String} ref 
@@ -73,7 +92,11 @@ function updateData(bot, ref, data) {
     const c = checkValidChannel(bot);
 
     // Encode the data
-    const base64 = Buffer.from(data).toString('base64');
+    const base64 = Buffer.from(data, 'utf8').toString('base64');
+
+    if (base64.length > 1950) {
+        base64 = addSplitChars(base64, 1940);
+    }
 
     c.fetchMessage(ref).then(msg => {
         // Delete the old references
@@ -87,7 +110,7 @@ function updateData(bot, ref, data) {
 
         c.send(base64, {
             split: {
-                char: empty
+                char: splitChar
             }
         }).then(chunks => {
             let refs;
@@ -128,7 +151,7 @@ function retrieveData(bot, ref, result) {
         // First collect all encoded chunks
         msg.embeds[0].description.split('\n').forEach(chunkId => {
             c.fetchMessage(chunkId).then(chunk => {
-                chunks.push(chunk.content.replace(empty, ''));
+                chunks.push(chunk.content);
             }).then(() => {
                 chunks.sort((a, b) => {
                     a - b
