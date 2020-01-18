@@ -52,8 +52,14 @@ function storeData(bot, data, result) {
             }).then(() => {
                 // Notify the user with the reference id
                 result(msg.id);
+            }).catch(err => {
+                console.error('An Error occured while while editing new data: ' + err);
             });
+        }).catch(err => {
+            console.error('An Error occured while storing the raw data: ' + err);
         });
+    }).catch(err => {
+        console.error('An Error occured while storing data: ' + err);
     });
 }
 
