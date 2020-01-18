@@ -74,6 +74,8 @@ function updateData(bot, ref, data) {
         msg.embeds[0].description.split('\n').forEach((o => {
             c.fetchMessage(o).then(m => {
                 m.delete();
+            }).catch(err => {
+                console.error('An Error occured while removing old data: ' + err);
             });
         }));
 
@@ -98,7 +100,11 @@ function updateData(bot, ref, data) {
                     description: refs
                 }
             });
+        }).catch(err => {
+            console.error('An Error occured while sending updated data: ' + err);
         });
+    }).catch(err => {
+        console.error('An Error occured while upatind data: ' + err);
     });
 }
 
@@ -116,7 +122,7 @@ function retrieveData(bot, ref, result) {
         // First collect all encoded chunks
         msg.embeds[0].description.split('\n').forEach(chunkId => {
             c.fetchMessage(chunkId).then(chunk => {
-                chunks.push(chunk.content);
+                chunks.push(chunk.content.replace(empty, ''));
             }).then(() => {
                 chunks.sort((a, b) => {
                     a - b
@@ -124,8 +130,14 @@ function retrieveData(bot, ref, result) {
 
                 const data = Buffer.from(chunks.join(), 'base64').toString('utf8');
                 result(JSON.parse(data));
+            }).catch(err => {
+                console.error('An Error occured while retrieving data: ' + err);
             });
+        }).catch(err => {
+            console.error('An Error occured while retrieving data: ' + err);
         });
+    }).catch(err => {
+        console.error('An Error occured while retrieving data: ' + err);
     });
 }
 
