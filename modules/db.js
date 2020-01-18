@@ -78,7 +78,9 @@ function updateData(bot, ref, data) {
         }));
 
         c.send(base64, {
-            split: true
+            split: {
+                char: empty
+            }
         }).then(chunks => {
             let refs;
             if (Array.isArray(chunks)) {
