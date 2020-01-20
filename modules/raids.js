@@ -397,6 +397,11 @@ function startSignUps(raid, members, raiderRole, params, date, ref) {
 
     // Listens to all the collected emojis. Users aren't allowed to react to all options, so the previous one will get removed.
     autoCollector.on('collect', react => {
+        if ((new Date()).getTime() > date.getTime()) { // Ignore and stop if date passed.
+            autoCollector.stop();
+            return; 
+        } 
+
         const user = react.users.last();
 
         if (manualCollector.collected.first() && manualCollector.collected.first().users.has(user.id)) {
@@ -431,6 +436,11 @@ function startSignUps(raid, members, raiderRole, params, date, ref) {
     });
 
     manualCollector.on('collect', react => {
+        if ((new Date()).getTime() > date.getTime()) { // Ignore and stop if date passed.
+            manualCollector.stop();
+            return; 
+        } 
+
         const user = react.users.last();
 
         if (absentCollector.collected.first() && absentCollector.collected.first().users.has(user.id)) {
@@ -530,6 +540,11 @@ function startSignUps(raid, members, raiderRole, params, date, ref) {
     });
 
     absentCollector.on('collect', react => {
+        if ((new Date()).getTime() > date.getTime()) { // Ignore and stop if date passed.
+            absentCollector.stop();
+            return; 
+        } 
+
         const user = react.users.last();
 
         if (manualCollector.collected.first() && manualCollector.collected.first().users.has(user.id)) {
