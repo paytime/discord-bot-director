@@ -60,7 +60,7 @@ function storeData(bot, data, result) {
                 console.error('An Error occured while while editing new data: ' + err);
             });
         }).catch(err => {
-            console.error('An Error occured while storing the raw data: ' + err);
+            console.error('Could not store new data: ' + err);
         });
     }).catch(err => {
         console.error('An Error occured while storing data: ' + err);
@@ -104,7 +104,7 @@ function updateData(bot, ref, data) {
             c.fetchMessage(o).then(m => {
                 m.delete();
             }).catch(err => {
-                console.error('An Error occured while removing old data: ' + err);
+                console.error('Could not find old chunk message: ' + err);
             });
         }));
 
@@ -130,10 +130,10 @@ function updateData(bot, ref, data) {
                 }
             });
         }).catch(err => {
-            console.error('An Error occured while sending updated data: ' + err);
+            console.error('Could not update content: ' + err);
         });
     }).catch(err => {
-        console.error('An Error occured while upatind data: ' + err);
+        console.error('An Error occured while updating data: ' + err);
     });
 }
 
@@ -153,20 +153,14 @@ function retrieveData(bot, ref, result) {
             c.fetchMessage(chunkId).then(chunk => {
                 chunks.push(chunk.content);
             }).then(() => {
-                chunks.sort((a, b) => {
-                    a - b
-                });
-
                 const data = Buffer.from(chunks.join(), 'base64').toString('utf8');
                 result(JSON.parse(data));
             }).catch(err => {
-                console.error('An Error occured while retrieving data: ' + err);
+                console.error('Could not find chunk message of id ' + chunkId + ': '  + err);
             });
-        }).catch(err => {
-            console.error('An Error occured while retrieving data: ' + err);
         });
     }).catch(err => {
-        console.error('An Error occured while retrieving data: ' + err);
+        console.error('Could not find data: ' + err);
     });
 }
 
