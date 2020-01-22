@@ -92,7 +92,7 @@ function updateData(bot, ref, data) {
     const c = checkValidChannel(bot);
 
     // Encode the data
-    const base64 = Buffer.from(data, 'utf8').toString('base64');
+    let base64 = Buffer.from(data, 'utf8').toString('base64');
 
     if (base64.length > 1950) {
         base64 = addSplitChars(base64, 1940);
