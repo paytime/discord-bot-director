@@ -75,14 +75,10 @@ function updateData(bot, ref, data) {
     }
 
     c.fetchMessage(ref).then(msg => {
-        console.log(`Starting data update for '${msg.id}'`);
         // Delete the old references
         const desc = msg.embeds[0].description;
-        console.log(`Fetching old references '${desc}'`);
         desc.split('\n').forEach(o => {
-            console.log(o);
             c.fetchMessage(o).then(m => {
-                console.log(`Trying to delete old reference '${m.id}'`);
                 m.delete().catch(err => {
                     console.error('Old chunk message does not exist: ' + err);
                 });
@@ -96,12 +92,10 @@ function updateData(bot, ref, data) {
                 char: splitChar
             }
         }).then(chunks => {
-            const refs = combineChunkReferences(chunks);
-            console.log(`Creating new chunk(s): '${refs}'`);
             msg.edit({
                 embed: {
                     title: msg.id,
-                    description: refs
+                    description: combineChunkReferences(chunks)
                 }
             }).catch(err => {
                 console.error('Could not update reference holder: ' + err);
@@ -126,6 +120,7 @@ function retrieveData(bot, ref, result) {
 
     c.fetchMessage(ref).then(msg => {
         // First collect all encoded chunks
+        console.log(msg.embeds[0].description);
         msg.embeds[0].description.split('\n').forEach(chunkId => {
             c.fetchMessage(chunkId).then(chunk => {
                 chunks.push(chunk.content);
