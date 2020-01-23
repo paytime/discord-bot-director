@@ -38,26 +38,16 @@ function storeData(bot, data, result) {
                 char: splitChar
             }
         }).then(chunks => {
-            let refs;
-            if (Array.isArray(chunks)) {
-                refs = chunks[0].id;
-                for (let i = 1; i < chunks.length; i++) {
-                    refs += "\n" + chunks[i].id;
-                }
-            } else {
-                refs = chunks.id;
-            }
-
             msg.edit({
                 embed: {
                     title: msg.id,
-                    description: refs
+                    description: combineChunkReferences(chunks)
                 }
             }).then(() => {
                 // Notify the user with the reference id
                 result(msg.id);
             }).catch(err => {
-                console.error('An Error occured while while editing new data: ' + err);
+                console.error('An Error occured while while storing new data: ' + err);
             });
         }).catch(err => {
             console.error('Could not store new data: ' + err);
@@ -65,21 +55,6 @@ function storeData(bot, data, result) {
     }).catch(err => {
         console.error('An Error occured while storing data: ' + err);
     });
-}
-
-/**
- * Adds a split character every n characters
- * @param {*} str 
- * @param {*} n 
- */
-function addSplitChars(str, n) {
-    let ret = [];
-    let i, len;
-
-    for (i = 0, len = str.length; i < len; i += n) {
-        ret.push(str.substring(i, n));
-    }
-    return ret.join(splitChar);
 }
 
 /**
@@ -95,39 +70,40 @@ function updateData(bot, ref, data) {
     let base64 = Buffer.from(data, 'utf8').toString('base64');
 
     if (base64.length > 1950) {
+        console.log(`Splitting chars for ${ref}`);
         base64 = addSplitChars(base64, 1940);
     }
 
     c.fetchMessage(ref).then(msg => {
+        console.log(`Starting data update for '${msg.id}'`);
         // Delete the old references
-        msg.embeds[0].description.split('\n').forEach((o => {
+        const desc = msg.embeds[0].description;
+        console.log(`Fetching old references '${desc}'`);
+        desc.split('\n').forEach(o => {
             c.fetchMessage(o).then(m => {
-                m.delete();
+                console.log(`Trying to delete old reference '${m.id}'`);
+                m.delete().catch(err => {
+                    console.error('Old chunk message does not exist: ' + err);
+                });
             }).catch(err => {
                 console.error('Could not find old chunk message: ' + err);
             });
-        }));
+        });
 
         c.send(base64, {
             split: {
                 char: splitChar
             }
         }).then(chunks => {
-            let refs;
-            if (Array.isArray(chunks)) {
-                refs = chunks[0].id;
-                for (let i = 1; i < chunks.length; i++) {
-                    refs += " " + chunks[i].id;
-                }
-            } else {
-                refs = chunks.id;
-            }
-
+            const refs = combineChunkReferences(chunks);
+            console.log(`Creating new chunk(s): '${refs.join('\n')}'`);
             msg.edit({
                 embed: {
                     title: msg.id,
                     description: refs
                 }
+            }).catch(err => {
+                console.error('Could not update reference holder: ' + err);
             });
         }).catch(err => {
             console.error('Could not update content: ' + err);
@@ -153,10 +129,10 @@ function retrieveData(bot, ref, result) {
             c.fetchMessage(chunkId).then(chunk => {
                 chunks.push(chunk.content);
             }).then(() => {
-                const data = Buffer.from(chunks.join(), 'base64').toString('utf8');
+                const data = Buffer.from(chunks.join(''), 'base64').toString('utf8');
                 result(JSON.parse(data));
             }).catch(err => {
-                console.error('Could not find chunk message of id ' + chunkId + ': '  + err);
+                console.error('Could not find chunk message of id ' + chunkId + ': ' + err);
             });
         });
     }).catch(err => {
@@ -181,6 +157,40 @@ function checkValidChannel(bot) {
     }
 
     return channel;
+}
+
+/**
+ * Combines all chunk message id's
+ * @param {*} chunks 
+ */
+function combineChunkReferences(chunks) {
+    let refs;
+
+    if (Array.isArray(chunks)) {
+        refs = chunks[0].id;
+        for (let i = 1; i < chunks.length; i++) {
+            refs += "\n" + chunks[i].id;
+        }
+    } else {
+        refs = chunks.id;
+    }
+
+    return refs;
+}
+
+/**
+ * Adds a split character every n characters
+ * @param {*} str 
+ * @param {*} n 
+ */
+function addSplitChars(str, n) {
+    let ret = [];
+    let i, len;
+
+    for (i = 0, len = str.length; i < len; i += n) {
+        ret.push(str.substring(i, n));
+    }
+    return ret.join(splitChar);
 }
 
 module.exports = {
