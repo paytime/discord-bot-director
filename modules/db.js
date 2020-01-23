@@ -80,13 +80,14 @@ function updateData(bot, ref, data) {
         const desc = msg.embeds[0].description;
         console.log(`Fetching old references '${desc}'`);
         desc.split('\n').forEach(o => {
+            console.log(o);
             c.fetchMessage(o).then(m => {
                 console.log(`Trying to delete old reference '${m.id}'`);
                 m.delete().catch(err => {
                     console.error('Old chunk message does not exist: ' + err);
                 });
             }).catch(err => {
-                console.error('Could not find old chunk message: ' + err);
+                console.error('Could not find old chunk messages: ' + err);
             });
         });
 
@@ -96,7 +97,7 @@ function updateData(bot, ref, data) {
             }
         }).then(chunks => {
             const refs = combineChunkReferences(chunks);
-            console.log(`Creating new chunk(s): '${refs.join('\n')}'`);
+            console.log(`Creating new chunk(s): '${refs}'`);
             msg.edit({
                 embed: {
                     title: msg.id,
