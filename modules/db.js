@@ -76,8 +76,7 @@ function updateData(bot, ref, data) {
 
     c.fetchMessage(ref).then(msg => {
         // Delete the old references
-        const desc = msg.embeds[0].description;
-        desc.split('\n').forEach(o => {
+        msg.embeds[0].description.split('\n').forEach(o => {
             c.fetchMessage(o).then(m => {
                 m.delete().catch(err => {
                     console.error('Old chunk message does not exist: ' + err);
@@ -120,7 +119,6 @@ function retrieveData(bot, ref, result) {
 
     c.fetchMessage(ref).then(msg => {
         // First collect all encoded chunks
-        console.log(msg.embeds[0].description);
         msg.embeds[0].description.split('\n').forEach(chunkId => {
             c.fetchMessage(chunkId).then(chunk => {
                 chunks.push(chunk.content);
