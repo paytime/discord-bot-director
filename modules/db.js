@@ -70,21 +70,11 @@ function updateData(bot, ref, data) {
     let base64 = Buffer.from(data, 'utf8').toString('base64');
 
     if (base64.length > 1950) {
-        console.log(`Splitting chars for ${ref}`);
         base64 = addSplitChars(base64, 1940);
     }
 
     c.fetchMessage(ref).then(msg => {
-        // Delete the old references
-        msg.embeds[0].description.split('\n').forEach(o => {
-            c.fetchMessage(o).then(m => {
-                m.delete().catch(err => {
-                    console.error('Old chunk message does not exist: ' + err);
-                });
-            }).catch(err => {
-                console.error('Could not find old chunk messages: ' + err);
-            });
-        });
+        const oldRefs = msg.embeds[0].description;
 
         c.send(base64, {
             split: {
@@ -96,6 +86,17 @@ function updateData(bot, ref, data) {
                     title: msg.id,
                     description: combineChunkReferences(chunks)
                 }
+            }).then(() => {
+                // Delete the old references
+                oldRefs.split('\n').forEach(o => {
+                    c.fetchMessage(o).then(m => {
+                        m.delete().catch(err => {
+                            console.error('Old chunk message does not exist: ' + err);
+                        });
+                    }).catch(err => {
+                        console.error(`Could not find old chunk message '${o}': ${err}`);
+                    });
+                });
             }).catch(err => {
                 console.error('Could not update reference holder: ' + err);
             });
