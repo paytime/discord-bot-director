@@ -22,7 +22,7 @@ function storeData(bot, data, result) {
     // Encode the data
     let base64 = Buffer.from(data, 'utf8').toString('base64');
 
-    if (base64.length > 1950) {
+    if (base64.length >= 1950) {
         base64 = addSplitChars(base64, 1940);
     }
 
@@ -69,7 +69,7 @@ function updateData(bot, ref, data) {
     // Encode the data
     let base64 = Buffer.from(data, 'utf8').toString('base64');
 
-    if (base64.length > 1950) {
+    if (base64.length >= 1950) {
         base64 = addSplitChars(base64, 1940);
     }
 
@@ -124,7 +124,7 @@ function retrieveData(bot, ref, result) {
             c.fetchMessage(chunkId).then(chunk => {
                 chunks.push(chunk.content);
             }).then(() => {
-                const data = Buffer.from(chunks.join(''), 'base64').toString('utf8');
+                const data = Buffer.from(chunks.join('').replace(splitChar, ''), 'base64').toString('utf8');
                 result(JSON.parse(data));
             }).catch(err => {
                 console.error('Could not find chunk message of id ' + chunkId + ': ' + err);
