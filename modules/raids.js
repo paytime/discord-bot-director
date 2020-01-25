@@ -353,6 +353,11 @@ function roster(msg, members, raiderRole, params, date) {
  * @param {*} date 
  */
 function signUpRoster(msg, members, raiderRole, params, date) {
+    // Fix sign up order
+    members.forEach(m => {
+        m.displayName = m.displayName.split(' ')[0] + '`' + (members.array().indexOf(m) + 1) + '`';
+    });
+
     // Creates a raid window
     const content = roster(msg, members, raiderRole, params, date);
 
