@@ -179,7 +179,14 @@ function combineChunkReferences(chunks) {
  * @param {*} n 
  */
 function addSplitChars(str, n) {
-    return str.match(`/.{${n}/g`).join(splitChar);
+    let output = '';
+    for (let i = 0; i < str.length; i++) {
+        if (i > 0 && i % n == 0)
+            output += splitChar;
+        output += str.charAt(i);
+    }
+
+    return output;
 }
 
 module.exports = {
