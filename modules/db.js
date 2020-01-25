@@ -70,9 +70,7 @@ function updateData(bot, ref, data) {
     let base64 = Buffer.from(data, 'utf8').toString('base64');
 
     if (base64.length >= 1900) {
-        console.log(base64);
         base64 = addSplitChars(base64, 1900);
-        console.log(base64);
     }
 
     c.fetchMessage(ref).then(msg => {
@@ -181,13 +179,7 @@ function combineChunkReferences(chunks) {
  * @param {*} n 
  */
 function addSplitChars(str, n) {
-    let ret = [];
-    let i, len;
-
-    for (i = 0, len = str.length; i < len; i += n) {
-        ret.push(str.substring(i, n));
-    }
-    return ret.join(splitChar);
+    return str.match(/.{n}/g).join(splitChar);
 }
 
 module.exports = {
