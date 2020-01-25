@@ -23,6 +23,7 @@ function storeData(bot, data, result) {
     let base64 = Buffer.from(data, 'utf8').toString('base64');
 
     if (base64.length >= 1900) {
+        console.log(base64);
         base64 = addSplitChars(base64, 1900);
         console.log(base64);
     }
