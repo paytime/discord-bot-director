@@ -24,6 +24,7 @@ function storeData(bot, data, result) {
 
     if (base64.length >= 1900) {
         base64 = addSplitChars(base64, 1900);
+        console.log(base64);
     }
 
     c.send({
