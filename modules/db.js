@@ -22,8 +22,8 @@ function storeData(bot, data, result) {
     // Encode the data
     let base64 = Buffer.from(data, 'utf8').toString('base64');
 
-    if (base64.length >= 1950) {
-        base64 = addSplitChars(base64, 1940);
+    if (base64.length >= 1900) {
+        base64 = addSplitChars(base64, 1900);
     }
 
     c.send({
@@ -69,8 +69,8 @@ function updateData(bot, ref, data) {
     // Encode the data
     let base64 = Buffer.from(data, 'utf8').toString('base64');
 
-    if (base64.length >= 1950) {
-        base64 = addSplitChars(base64, 1940);
+    if (base64.length >= 1900) {
+        base64 = addSplitChars(base64, 1900);
     }
 
     c.fetchMessage(ref).then(msg => {
