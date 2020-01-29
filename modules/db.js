@@ -90,12 +90,10 @@ function updateData(bot, ref, data) {
                 // Delete the old references
                 oldRefs.split('\n').forEach(o => {
                     c.fetchMessage(o).then(m => {
-                        m.delete().catch(err => {
+                        m.delete(1000).catch(err => {
                             console.error('Old chunk message does not exist: ' + err);
                         });
-                    }).catch(err => {
-                        console.error(`Could not find old chunk message '${o}': ${err}`);
-                    });
+                    }).catch(() => {}); // Ignore missing errors
                 });
             }).catch(err => {
                 console.error('Could not update reference holder: ' + err);
@@ -125,7 +123,10 @@ function retrieveData(bot, ref, result) {
                 chunks.push(chunk.content);
             }).then(() => {
                 const data = Buffer.from(chunks.join('').replace(splitChar, ''), 'base64').toString('utf8');
-                result(JSON.parse(data));
+                try{
+                    const parsed = JSON.parse(data);
+                    result(parsed);
+                } catch {} // Do nothing when the JSON cannot be parsed yet.     
             }).catch(err => {
                 console.error('Could not find chunk message of id ' + chunkId + ': ' + err);
             });

@@ -4,7 +4,7 @@ const raids = require('../modules/raids');
 
 module.exports = {
     name: 'raid',
-    description: 'Creates a new raid event for the user\'s main raid. Optionally a different raid can be specified. Syntax: `@bot raid [@Raider]`',
+    description: 'Creates a new raid event for the user\'s main raid. Syntax: `@bot raid dd-mm-yyyy/HH:MM [@Raider]`',
     /**
      * The execute command
      * @param {Discord.Message} msg 
