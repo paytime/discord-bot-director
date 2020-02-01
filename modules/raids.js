@@ -384,7 +384,7 @@ function startSignUps(raid, members, raiderRole, params, date, ref) {
     const curDate = new Date();
 
     if (curDate.getTime() > date.getTime()) { // If the event ran out remove the message
-        raid.delete();
+        raid.delete().catch(() => {});
         return;
     }
 

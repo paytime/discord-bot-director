@@ -87,12 +87,10 @@ function updateData(bot, ref, data) {
                     description: combineChunkReferences(chunks)
                 }
             }).then(() => {
-                // Delete the old references
+                // Try to delete the old references
                 oldRefs.split('\n').forEach(o => {
                     c.fetchMessage(o).then(m => {
-                        m.delete(1000).catch(err => {
-                            console.error('Old chunk message does not exist: ' + err);
-                        });
+                        m.delete(1000).catch(() => {}); // Ignore unknown message errors
                     }).catch(() => {}); // Ignore missing errors
                 });
             }).catch(err => {
