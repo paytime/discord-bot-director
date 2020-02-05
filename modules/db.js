@@ -87,10 +87,12 @@ function updateData(bot, ref, data) {
                     description: combineChunkReferences(chunks)
                 }
             }).then(() => {
-                // Try to delete the old references
+                // Try to edit and delete the old references
                 oldRefs.split('\n').forEach(o => {
                     c.fetchMessage(o).then(m => {
-                        m.delete(1000).catch(() => {}); // Ignore unknown message errors
+                        m.edit('*removed*').then(d => {
+                            d.delete(1000).catch(() => {});
+                        }).catch(() => {});;
                     }).catch(() => {}); // Ignore missing errors
                 });
             }).catch(err => {
