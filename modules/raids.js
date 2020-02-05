@@ -381,10 +381,8 @@ function signUpRoster(msg, members, raiderRole, params, date) {
  * @param {String} ref 
  */
 function startSignUps(raid, members, raiderRole, params, date, ref) {
-    const curDate = new Date();
-
-    if (curDate.getTime() > date.getTime()) { // If the event ran out remove the message
-        raid.delete().catch(() => {});
+    if ((new Date()).getTime() > date.getTime()) { // If the event ran out stop it.
+        raid.edit({ embed: raid.embeds[0] });
         return;
     }
 
@@ -403,6 +401,7 @@ function startSignUps(raid, members, raiderRole, params, date, ref) {
     // Listens to all the collected emojis. Users aren't allowed to react to all options, so the previous one will get removed.
     autoCollector.on('collect', react => {
         if ((new Date()).getTime() > date.getTime()) { // Ignore and stop if date passed.
+            raid.edit({ embed: raid.embeds[0] });
             autoCollector.stop();
             return; 
         } 
@@ -442,6 +441,7 @@ function startSignUps(raid, members, raiderRole, params, date, ref) {
 
     manualCollector.on('collect', react => {
         if ((new Date()).getTime() > date.getTime()) { // Ignore and stop if date passed.
+            raid.edit({ embed: raid.embeds[0] });
             manualCollector.stop();
             return; 
         } 
@@ -546,6 +546,7 @@ function startSignUps(raid, members, raiderRole, params, date, ref) {
 
     absentCollector.on('collect', react => {
         if ((new Date()).getTime() > date.getTime()) { // Ignore and stop if date passed.
+            raid.edit({ embed: raid.embeds[0] });
             absentCollector.stop();
             return; 
         } 
