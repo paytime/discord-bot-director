@@ -53,8 +53,9 @@ function update(bot, roles, statsmsg) {
     for (let i = 0; i < roles.roles.list.length; i++) {
         const c = roles.roles.list[i];
         const count = Array.from(guild.members.filter(m => !m.user.bot && m.roles.has(c.id))).length;
+        const emoji = guild.emojis.find(e => e.name === c.emoji);
 
-        rolesFields += `<@&${c.id}> [**(${count})**](${getChannelLink(c.channel)})    `;
+        rolesFields += `${emoji} <@&${c.id}> **(${count})**    `;
     }
 
     let raidersFields = `**[Raiders](${getChannelLink(roles.raiders.select)})**\n\n`;
@@ -80,7 +81,7 @@ function update(bot, roles, statsmsg) {
         const count = Array.from(guild.members.filter(m => !m.user.bot && m.roles.has(c.id))).length;
         const emoji = guild.emojis.find(e => e.name === c.emoji);
 
-        const text = `${emoji} <@&${c.id}> [**(${count})**](${getChannelLink(c.channel)})\n\n`;
+        const text = `${emoji} <@&${c.id}> **(${count})**\n\n`;
 
         if (i > 3) {
             profFields2 += text;
@@ -94,7 +95,6 @@ function update(bot, roles, statsmsg) {
             timestamp: date,
             title: `<${guild.name}> SERVER STATISTICS`,
             description: `Guild Members: **${membersCount}**`,
-            color: 8462170,
             thumbnail: {
                 url: iconUrl
             },
