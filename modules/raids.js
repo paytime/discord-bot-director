@@ -374,6 +374,21 @@ function signUpRoster(msg, members, raiderRole, params, date) {
 }
 
 /**
+ * Archives the raid
+ * @param {*} raid 
+ * @param {*} auto 
+ * @param {*} absent 
+ * @param {*} manual 
+ */
+function archiveRaid(raid, autoCollector, absentCollector, manualCollector) {
+    raid.edit(archivedRaid).catch(() => {});
+    autoCollector.stop();
+    absentCollector.stop();
+    manualCollector.stop();
+    raid.clearReactions().catch(() => {});
+}
+
+/**
  * Starts the sign up process of the raid
  * @param {Discord.Message} raid 
  * @param {Discord.Collection<String, Discord.GuildMember>} members 
@@ -385,6 +400,7 @@ function signUpRoster(msg, members, raiderRole, params, date) {
 function startSignUps(raid, members, raiderRole, params, date, ref) {
     if ((new Date()).getTime() > date.getTime()) { // If the event ran out stop it.
         raid.edit(archivedRaid).catch(() => {});
+        raid.clearReactions().catch(() => {});
         return;
     }
 
@@ -403,8 +419,7 @@ function startSignUps(raid, members, raiderRole, params, date, ref) {
     // Listens to all the collected emojis. Users aren't allowed to react to all options, so the previous one will get removed.
     autoCollector.on('collect', react => {
         if ((new Date()).getTime() > date.getTime()) { // Ignore and stop if date passed.
-            raid.edit(archivedRaid).catch(() => {});
-            autoCollector.stop();
+            archiveRaid(raid, autoCollector, manualCollector, absentCollector);
             return; 
         } 
 
@@ -443,8 +458,7 @@ function startSignUps(raid, members, raiderRole, params, date, ref) {
 
     manualCollector.on('collect', react => {
         if ((new Date()).getTime() > date.getTime()) { // Ignore and stop if date passed.
-            raid.edit(archivedRaid).catch(() => {});
-            manualCollector.stop();
+            archiveRaid(raid, autoCollector, manualCollector, absentCollector);
             return; 
         } 
 
@@ -548,8 +562,7 @@ function startSignUps(raid, members, raiderRole, params, date, ref) {
 
     absentCollector.on('collect', react => {
         if ((new Date()).getTime() > date.getTime()) { // Ignore and stop if date passed.
-            raid.edit(archivedRaid).catch(() => {});
-            absentCollector.stop();
+            archiveRaid(raid, autoCollector, manualCollector, absentCollector);
             return; 
         } 
 
