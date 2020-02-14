@@ -31,11 +31,11 @@ module.exports = {
                 }
                 members.set(raider.id, raider);
             });
+
+            // Post the raid roster
+            const content = raids.roster(msg, members, raiderRole, params);
+
+            msg.channel.send({ embed: content });
         });
-
-        // Post the raid roster
-        const content = raids.roster(msg, members, raiderRole, params);
-
-        msg.channel.send({ embed: content });
     }
 }
