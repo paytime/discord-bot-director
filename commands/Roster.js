@@ -22,13 +22,15 @@ module.exports = {
 
         // Find and store everyone with the raider role
         const members = new Discord.Collection();
-        msg.guild.members.filter(member => member.roles.has(raiderRole)).forEach(m => {
-            const raider = {
-                id: m.id,
-                roles: m.roles,
-                displayName: m.displayName
-            }
-            members.set(raider.id, raider);
+        msg.guild.fetchMembers().then(guild => {
+            guild.members.filter(member => member.roles.has(raiderRole)).forEach(m => {
+                const raider = {
+                    id: m.id,
+                    roles: m.roles,
+                    displayName: m.displayName
+                }
+                members.set(raider.id, raider);
+            });
         });
 
         // Post the raid roster
