@@ -669,6 +669,8 @@ function startSignUps(raid, members, raiderRole, params, date, info, ref) {
                             } else {
                                 info = args;
                             }
+                        } else {
+                            info = defaultInfoText
                         }
                         break;
                     case 'remove':
