@@ -425,16 +425,16 @@ function startSignUps(raid, members, raiderRole, params, date, info, ref) {
 
     const staffRole = fetchStaffRole(params, raiderRole);
 
-    // Only members of this raid group will get considered
+    // Only members of this raid group will get considered and administrators
     const autoFilter = (react, user) => react.emoji.name === autoSignUp
-        && raid.guild.members.filter(member => member.roles.has(raiderRole)).has(user.id);
+        && raid.guild.members.filter(member => member.roles.has(raiderRole) || member.hasPermission('ADMINISTRATOR')).has(user.id);
     const manualFilter = (react, user) => react.emoji.name === manualSignUp
-        && raid.guild.members.filter(member => member.roles.has(raiderRole)).has(user.id);
+        && raid.guild.members.filter(member => member.roles.has(raiderRole) || member.hasPermission('ADMINISTRATOR')).has(user.id);
     const cancelFilter = (react, user) => react.emoji.name === cancelSignUp
-        && raid.guild.members.filter(member => member.roles.has(raiderRole)).has(user.id);
+        && raid.guild.members.filter(member => member.roles.has(raiderRole) || member.hasPermission('ADMINISTRATOR')).has(user.id);
 
     const adminFilter = (react, user) => react.emoji.name === adminSignUp
-        && raid.guild.members.filter(member => member.roles.has(staffRole)).has(user.id);
+        && raid.guild.members.filter(member => member.roles.has(staffRole) || member.hasPermission('ADMINISTRATOR')).has(user.id);
 
     const autoCollector = raid.createReactionCollector(autoFilter);
     const manualCollector = raid.createReactionCollector(manualFilter);
@@ -638,11 +638,12 @@ function startSignUps(raid, members, raiderRole, params, date, info, ref) {
         user.createDM().then(dm => {
             const maxLen = 400;
 
-            dm.send(`**RAID \`${ref}\` OPTIONS**\n\nCommands:\n🡆 \`date dd-mm-yyyy/HH:MM\` - Changes the raid's schedule (in CET/CEST). Example: \`date 20-05-2020/15:00\`\n🡆 \`info YOUR_MESSAGE\` - Changes the info text. Max. length: ${maxLen} characters\n🡆 \`remove NUM\` - Removes a user from the sign up list. NUM is the user's sign up order.\n🡆 \`cancel\` - Cancel this operation.`);
+            dm.send(`**RAID \`${ref}\` OPTIONS**\n\nCommands:\n🡆 \`date dd-mm-yyyy/HH:MM\` - Changes the raid's schedule (in CET/CEST). Example: \`date 20-05-2020/15:00\`\n🡆 \`info YOUR_MESSAGE\` - Changes the info text. Max. length: ${maxLen} characters\n🡆 \`remove NUM\` - Removes a user from the sign up list. NUM is the user's sign up order.\n🡆 \`add ID\` - Adds or updates a member. ID is the player's discord ID, which you can retrieve by right clicking on their name and selecting 'Copy ID'.\n🡆 \`cancel\` - Cancel this operation.`);
 
             const filter = m => m.content.trim().length >= 4 && m.content.trim().length <= maxLen + 10 && (m.content.trim().toLowerCase().startsWith('date') ||
                 m.content.trim().toLowerCase().startsWith('info') ||
                 m.content.trim().toLowerCase().startsWith('remove') ||
+                m.content.trim().toLowerCase().startsWith('add') ||
                 m.content.trim().toLowerCase().startsWith('cancel'));
             const messageCollector = dm.createMessageCollector(filter, { time: 300000 });
 
@@ -682,6 +683,27 @@ function startSignUps(raid, members, raiderRole, params, date, info, ref) {
                         } else {
                             err = "Couldn't find user at this position. Try again!";
                         }
+                        break;
+                    case 'add':
+                        if (!args || args.length > 50) {
+                            err = "Not a valid input!"
+                        }
+
+                        const member = raid.guild.members.get(args);
+
+                        if (member) {
+                            const isNotRaider = member.roles.has(raiderRole) ? '' : '*';
+
+                            members.delete(member.id);
+                            members.set(member.id, {
+                                id: member.id,
+                                roles: member.roles,
+                                displayName: member.displayName + `${isNotRaider} \`${members.size + 1}\``
+                            });
+                        } else {
+                            err = "Could not find member!";
+                        }
+
                         break;
                     case 'cancel':
                         messageCollector.stop();
