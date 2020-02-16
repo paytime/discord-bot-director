@@ -368,13 +368,7 @@ function signUpRoster(msg, members, raiderRole, params, date) {
     // Append the info about the sign up emojis
     content.fields.push({
         name: empty,
-        value: empty,
-        inline: false
-    });
-
-    content.fields.push({
-        name: empty,
-        value: `**${autoSignUp} - AUTO SIGN UP\n\n**${manualSignUp} - MANUAL (For Alts)**`,
+        value: `**${autoSignUp} - AUTO SIGN UP\n\n${manualSignUp} - MANUAL (For Alts)**`,
         inline: true
     });
 
