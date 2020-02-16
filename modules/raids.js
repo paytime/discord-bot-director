@@ -670,7 +670,7 @@ function startSignUps(raid, members, raiderRole, params, date, info, ref) {
                                 info = args;
                             }
                         } else {
-                            info = defaultInfoText
+                            info = defaultInfoText;
                         }
                         break;
                     case 'remove':
