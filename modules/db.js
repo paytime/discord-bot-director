@@ -74,7 +74,7 @@ function updateData(bot, ref, data) {
     }
 
     c.fetchMessage(ref).then(msg => {
-        const oldRefs = msg.embeds[0].description;
+        const oldRefs = msg.embeds[0].description.split('\n');
 
         c.send(base64, {
             split: {
@@ -87,14 +87,8 @@ function updateData(bot, ref, data) {
                     description: combineChunkReferences(chunks)
                 }
             }).then(() => {
-                // Try to edit and delete the old references
-                oldRefs.split('\n').forEach(o => {
-                    c.fetchMessage(o).then(m => {
-                        m.edit('*removed*').then(d => {
-                            d.delete(1000).catch(() => {});
-                        }).catch(() => {});;
-                    }).catch(() => {}); // Ignore missing errors
-                });
+                // Delete old chunks
+                c.bulkDelete(oldRefs).catch(() => {}); // Ignore missing errors
             }).catch(err => {
                 console.error('Could not update reference holder: ' + err);
             });
