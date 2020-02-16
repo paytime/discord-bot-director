@@ -6,9 +6,11 @@ const empty = '\u200b';
 const startmsg = (ref, raiderRole) => {
     return `ID: ${ref} - <@&${raiderRole}>`;
 };
+
 const autoSignUp = '✅';
 const manualSignUp = '#️⃣';
 const cancelSignUp = '❎';
+const adminSignUp = '⚙️';
 
 const db = require('./db');
 
@@ -366,8 +368,14 @@ function signUpRoster(msg, members, raiderRole, params, date) {
     // Append the info about the sign up emojis
     content.fields.push({
         name: empty,
-        value: `**${autoSignUp} - AUTO SIGN UP\n\n${manualSignUp} - MANUAL SIGN UP (For Alts)\n\n${cancelSignUp} - ABSENT**`,
+        value: `**${autoSignUp} - AUTO SIGN UP\n\n**${manualSignUp} - MANUAL (For Alts)**`,
         inline: false
+    });
+
+    content.fields.push({
+        name: empty,
+        value: `**${cancelSignUp} - ABSENT\n\n${adminSignUp} - OPTIONS (Staff only)**`,
+        inline: true
     });
 
     return content;
@@ -412,9 +420,13 @@ function startSignUps(raid, members, raiderRole, params, date, ref) {
     const cancelFilter = (react, user) => react.emoji.name === cancelSignUp
         && raid.guild.members.filter(member => member.roles.has(raiderRole)).has(user.id);
 
+    const adminFilter = (react, user) => react.emoji.name === adminSignUp
+        && raid.guild.members.filter(member => member.roles.has(fetchStaffRole(params, raiderRole))).has(user.id);
+
     const autoCollector = raid.createReactionCollector(autoFilter);
     const manualCollector = raid.createReactionCollector(manualFilter);
     const absentCollector = raid.createReactionCollector(cancelFilter);
+    const adminCollector = raid.createReactionCollector(adminFilter);
 
     // Listens to all the collected emojis. Users aren't allowed to react to all options, so the previous one will get removed.
     autoCollector.on('collect', react => {
@@ -594,6 +606,24 @@ function startSignUps(raid, members, raiderRole, params, date, ref) {
             db.push(raid.client, ref, entry);
         }
     });
+
+    adminCollector.on('collect', react => {
+        if ((new Date()).getTime() > date.getTime()) { // Ignore and stop if date passed.
+            archiveRaid(raid, autoCollector, manualCollector, absentCollector);
+            return; 
+        }
+
+        const user = react.users.last();
+
+        // Instantly remove reaction, so that user can keep using this option
+        adminCollector.collected.first().remove(user.id);
+
+        // User will receive a direct message and will be instructed on what options they can change
+        user.createDM(dm => {
+            // TODO
+            dm.send(`You have chosen to update the raid \`${raiderRole}\`. WORK IN PROGRESS`);
+        });
+    });
 }
 
 /**
@@ -672,10 +702,27 @@ function createRaidEvent(msg, raiderRole, params, date) {
                         await raid.react(autoSignUp);
                         await raid.react(manualSignUp);
                         await raid.react(cancelSignUp);
+                        await raid.react(adminSignUp);
                     })
                     .then(startSignUps(raid, new Discord.Collection(), raiderRole, params, date, ref));
             });
         });
+}
+
+/**
+ * Gets the raid staff role by raider role
+ * @param {*} params 
+ * @param {String} raiderRole 
+ */
+function fetchStaffRole(params, raiderRole) {
+    for (let i = 0; i < params.roles.raiders.list.length; i++) {
+        const raid = params.roles.raiders.list[i];
+
+        if (raid.id === raiderRole) {
+            return raid.staff;
+        }
+    }
+    return null;
 }
 
 module.exports = {
