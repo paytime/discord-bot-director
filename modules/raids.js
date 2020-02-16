@@ -665,13 +665,15 @@ function createRaidEvent(msg, raiderRole, params, date) {
                 members: []
             });
 
-            // Store data in db and then start the raid
+            // Store data in db, add buttons and then start the raid
             db.commit(msg.client, entry, (ref) => {
                 raid.edit(startmsg(ref, raiderRole), { embed: content })
-                    .then(raid.react(autoSignUp)
-                        .then(raid.react(manualSignUp)
-                            .then(raid.react(cancelSignUp)
-                                .then(startSignUps(raid, new Discord.Collection(), raiderRole, params, date, ref)))));
+                    .then(async function () {
+                        await raid.react(autoSignUp);
+                        await raid.react(manualSignUp);
+                        await raid.react(cancelSignUp);
+                    })
+                    .then(startSignUps(raid, new Discord.Collection(), raiderRole, params, date, ref));
             });
         });
 }
