@@ -427,14 +427,14 @@ function startSignUps(raid, members, raiderRole, params, date, info, ref) {
 
     // Only members of this raid group will get considered and administrators
     const autoFilter = (react, user) => react.emoji.name === autoSignUp
-        && raid.guild.members.filter(member => member.roles.has(raiderRole) || member.hasPermission('ADMINISTRATOR')).has(user.id);
+        && raid.guild.members.filter(member => !member.user.bot && (member.roles.has(raiderRole) || member.hasPermission('ADMINISTRATOR'))).has(user.id);
     const manualFilter = (react, user) => react.emoji.name === manualSignUp
-        && raid.guild.members.filter(member => member.roles.has(raiderRole) || member.hasPermission('ADMINISTRATOR')).has(user.id);
+        && raid.guild.members.filter(member => !member.user.bot && (member.roles.has(raiderRole) || member.hasPermission('ADMINISTRATOR'))).has(user.id);
     const cancelFilter = (react, user) => react.emoji.name === cancelSignUp
-        && raid.guild.members.filter(member => member.roles.has(raiderRole) || member.hasPermission('ADMINISTRATOR')).has(user.id);
+        && raid.guild.members.filter(member => !member.user.bot && (member.roles.has(raiderRole) || member.hasPermission('ADMINISTRATOR'))).has(user.id);
 
     const adminFilter = (react, user) => react.emoji.name === adminSignUp
-        && raid.guild.members.filter(member => member.roles.has(staffRole) || member.hasPermission('ADMINISTRATOR')).has(user.id);
+        && raid.guild.members.filter(member => !member.user.bot && (member.roles.has(staffRole) || member.hasPermission('ADMINISTRATOR'))).has(user.id);
 
     const autoCollector = raid.createReactionCollector(autoFilter);
     const manualCollector = raid.createReactionCollector(manualFilter);
