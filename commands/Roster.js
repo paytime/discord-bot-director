@@ -4,7 +4,7 @@ const raids = require('../modules/raids');
 
 module.exports = {
     name: 'roster',
-    description: 'Displays the raid roster of the user\'s raid group or of a specified raid. Syntax: `@bot roster [@Raider]`',
+    description: 'Posts a raid roster. Syntax: `@bot roster [@Raider]`',
     /**
      * The execute command
      * @param {Discord.Message} msg 

@@ -91,46 +91,44 @@ function restartRaid(bot, raid, guild, params) {
  * @param {Discord.Message} msg 
  * @param {String} str 
  * @param {*} params 
- * @param {Boolean} specialperms
+ * @param {Boolean} needsPerm 
  */
-function fetchRaiderRole(msg, str, params, specialperms) {
+function fetchRaiderRole(msg, str, params, needsPerm) {
     // Check if the input is a raider role or emoji, otherwise take user's raider role
-    let raiderRole;
+    let raider;
     if (str) {
         for (let i = 0; i < params.roles.raiders.list.length; i++) {
             const x = params.roles.raiders.list[i];
             if (x.emoji === str || x.id === str.slice(3, -1)) {
-                raiderRole = x.id;
+                raider = x;
                 break;
             }
         }
     } else {
         // Find the user's first raider role
         for (let i = 0; i < params.roles.raiders.list.length; i++) {
-            const roleId = params.roles.raiders.list[i].id;
+            const role = params.roles.raiders.list[i];
 
-            if (msg.member.roles.has(roleId)) {
-                raiderRole = roleId;
-                if (specialperms) {
-                    const staff = params.roles.raiders.list[i].staff;
-                    if (!msg.member.hasPermission('ADMINISTRATOR') && !msg.member.roles.has(staff)) {
-                        throw new Error('You do not have the permission to use this command.');
-                    }
-                }
+            if (msg.member.roles.has(role.id)) {
+                raider = role;
                 break;
             }
         }
 
-        if (!raiderRole) {
+        if (!raider) {
             throw new Error('You are not a member of any raid group.');
         }
     }
 
-    if (!raiderRole) {
+    if (!raider) {
         throw new Error('Inavlid raider role.');
     }
 
-    return raiderRole;
+    if (needsPerm && !msg.member.hasPermission('ADMINISTRATOR') && !msg.member.roles.has(raider.staff)) {
+        throw new Error('You do not have the permission to use this command.');
+    }
+
+    return raider.id;
 }
 
 /**
@@ -420,7 +418,7 @@ function startSignUps(raid, members, raiderRole, params, date, info, ref) {
         return;
     }
 
-    const staffRole = fetchStaffRole(params, raiderRole);
+    const staffRole = params.roles.raiders.list.find(x => x.id === raiderRole).staff;
 
     // Only members of this raid group will get considered and administrators
     const autoFilter = (react, user) => react.emoji.name === autoSignUp
@@ -653,7 +651,7 @@ function startSignUps(raid, members, raiderRole, params, date, info, ref) {
 
                 switch (command) {
                     case 'date':
-                        try{
+                        try {
                             date = getdate(args);
                         } catch (formaterr) {
                             err = formaterr.message + "Try again!";
@@ -824,22 +822,6 @@ function createRaidEvent(msg, raiderRole, params, date) {
                     .then(startSignUps(raid, new Discord.Collection(), raiderRole, params, date, defaultInfoText, ref));
             });
         });
-}
-
-/**
- * Gets the raid staff role by raider role
- * @param {*} params 
- * @param {String} raiderRole 
- */
-function fetchStaffRole(params, raiderRole) {
-    for (let i = 0; i < params.roles.raiders.list.length; i++) {
-        const raid = params.roles.raiders.list[i];
-
-        if (raid.id === raiderRole) {
-            return raid.staff;
-        }
-    }
-    return null;
 }
 
 module.exports = {
