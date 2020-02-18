@@ -4,7 +4,7 @@ const raids = require('../modules/raids');
 
 module.exports = {
     name: 'raid',
-    description: 'Creates a new raid event for the user\'s main raid. Syntax: `@bot raid dd-mm-yyyy/HH:MM [@Raider]`',
+    description: 'Creates a new raid event for the user\'s main raid. Syntax: `@bot raid dd-mm-yyyy/HH:MM @Raider`',
     /**
      * The execute command
      * @param {Discord.Message} msg 
@@ -20,7 +20,7 @@ module.exports = {
         const date = raids.getdate(args[0]);
 
         // Third, determine the raider role
-        const raiderRole = raids.raiderRole(msg, args[1], params, false);
+        const raiderRole = raids.raiderRole(msg, args[1], params, true);
 
         // Create the message and add reactions
         raids.createRaidEvent(msg, raiderRole, params, date);

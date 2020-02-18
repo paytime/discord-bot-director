@@ -94,15 +94,6 @@ function restartRaid(bot, raid, guild, params) {
  * @param {Boolean} specialperms
  */
 function fetchRaiderRole(msg, str, params, specialperms) {
-    const leaderRoleId = params.roles.raiders.leader;
-    const assistRoleId = params.roles.raiders.assist;
-
-    if (specialperms) {
-        if (!msg.member.hasPermission('ADMINISTRATOR') && !msg.member.roles.has(leaderRoleId) && !msg.member.roles.has(assistRoleId)) {
-            throw new Error('You do not have the permission to use this command.');
-        }
-    }
-
     // Check if the input is a raider role or emoji, otherwise take user's raider role
     let raiderRole;
     if (str) {
@@ -120,6 +111,12 @@ function fetchRaiderRole(msg, str, params, specialperms) {
 
             if (msg.member.roles.has(roleId)) {
                 raiderRole = roleId;
+                if (specialperms) {
+                    const staff = params.roles.raiders.list[i].staff;
+                    if (!msg.member.hasPermission('ADMINISTRATOR') && !msg.member.roles.has(staff)) {
+                        throw new Error('You do not have the permission to use this command.');
+                    }
+                }
                 break;
             }
         }
