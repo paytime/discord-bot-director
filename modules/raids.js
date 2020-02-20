@@ -70,12 +70,13 @@ function restartRaid(bot, raid, guild, params) {
 
             const members = new Discord.Collection();
             for (let i = 0; i < entry.members.length; i++) {
-                const member = guild.members.get(entry.members[i].id);
+                const em = entry.members[i];
+                const member = guild.members.get(em.id);
                 if (member) {
-                    members.set(entry.members[i].id, {
-                        id: entry.members[i].id,
-                        roles: member.roles,
-                        displayName: entry.members[i].displayName
+                    members.set(em.id, {
+                        id: em.id,
+                        roles: em.roles && em.roles instanceof Array ? em.roles : Array.from(member.roles.keys()),
+                        displayName: em.displayName
                     });
                 }
             }
@@ -193,55 +194,55 @@ function roster(msg, members, raiderRole, params, date) {
         return 0;
     }
 
-    members.filter(m => m.roles.has(roles[0].id)).sort(sort).forEach(m => {
+    members.filter(m => m.roles.includes(roles[0].id)).sort(sort).forEach(m => {
         tanks.push(`${emoji(0)} ${m.displayName}`);
     });
 
-    members.filter(m => m.roles.has(classes[7].id)).sort(sort).forEach(m => {
-        if (m.roles.has(roles[0].id)) return;
+    members.filter(m => m.roles.includes(classes[7].id)).sort(sort).forEach(m => {
+        if (m.roles.includes(roles[0].id)) return;
 
         warriors.push(`${emoji(2)} ${m.displayName}`);
     });
 
-    members.filter(m => m.roles.has(classes[0].id)).sort(sort).forEach(m => {
-        if (m.roles.has(roles[0].id)) return;
+    members.filter(m => m.roles.includes(classes[0].id)).sort(sort).forEach(m => {
+        if (m.roles.includes(roles[0].id)) return;
 
         let role = 2;
 
-        if (m.roles.has(roles[1].id)) role = 1;
+        if (m.roles.includes(roles[1].id)) role = 1;
 
         druids.push(`${emoji(role)} ${m.displayName}`);
     });
 
-    members.filter(m => m.roles.has(classes[4].id)).sort(sort).forEach(m => {
+    members.filter(m => m.roles.includes(classes[4].id)).sort(sort).forEach(m => {
         rogues.push(`${emoji(2)} ${m.displayName}`);
     });
 
-    members.filter(m => m.roles.has(classes[5].id)).sort(sort).forEach(m => {
+    members.filter(m => m.roles.includes(classes[5].id)).sort(sort).forEach(m => {
         let role = 1;
 
-        if (m.roles.has(roles[2].id)) role = 2;
+        if (m.roles.includes(roles[2].id)) role = 2;
 
         shamans.push(`${emoji(role)} ${m.displayName}`);
     });
 
-    members.filter(m => m.roles.has(classes[6].id)).sort(sort).forEach(m => {
+    members.filter(m => m.roles.includes(classes[6].id)).sort(sort).forEach(m => {
         warlocks.push(`${emoji(2)} ${m.displayName}`);
     });
 
-    members.filter(m => m.roles.has(classes[2].id)).sort(sort).forEach(m => {
+    members.filter(m => m.roles.includes(classes[2].id)).sort(sort).forEach(m => {
         mages.push(`${emoji(2)} ${m.displayName}`);
     });
 
-    members.filter(m => m.roles.has(classes[3].id)).sort(sort).forEach(m => {
+    members.filter(m => m.roles.includes(classes[3].id)).sort(sort).forEach(m => {
         let role = 1;
 
-        if (m.roles.has(roles[2].id)) role = 2;
+        if (m.roles.includes(roles[2].id)) role = 2;
 
         priests.push(`${emoji(role)} ${m.displayName}`);
     });
 
-    members.filter(m => m.roles.has(classes[1].id)).sort(sort).forEach(m => {
+    members.filter(m => m.roles.includes(classes[1].id)).sort(sort).forEach(m => {
         hunters.push(`${emoji(2)} ${m.displayName}`);
     });
 
@@ -268,12 +269,12 @@ function roster(msg, members, raiderRole, params, date) {
         },
         {
             name: empty,
-            value: `**${emoji(2)} DPS - ${members.filter(m => m.roles.has(roles[2].id)).size} ${emoji(2)}\n${empty}**`,
+            value: `**${emoji(2)} DPS - ${members.filter(m => m.roles.includes(roles[2].id)).size} ${emoji(2)}\n${empty}**`,
             inline: true
         },
         {
             name: empty,
-            value: `**${emoji(1)} Healers - ${members.filter(m => m.roles.has(roles[1].id)).size} ${emoji(1)}\n${empty}**`,
+            value: `**${emoji(1)} Healers - ${members.filter(m => m.roles.includes(roles[1].id)).size} ${emoji(1)}\n${empty}**`,
             inline: true
         }
     ];
@@ -459,7 +460,7 @@ function startSignUps(raid, members, raiderRole, params, date, info, ref) {
         members.delete(user.id);
         members.set(user.id, {
             id: m.id,
-            roles: m.roles,
+            roles: Array.from(m.roles.keys()),
             displayName: m.displayName + ` \`${members.size + 1}\``
         });
         const editedContent = signUpRoster(raid, members, raiderRole, params, date, info);
@@ -550,13 +551,10 @@ function startSignUps(raid, members, raiderRole, params, date, info, ref) {
                 }
 
                 if (isOk) {
-                    const roles = new Discord.Collection();
-                    roles.set(classrole.id, classrole);
-                    roles.set(role.id, role);
                     members.delete(user.id);
                     members.set(user.id, {
                         id: user.id,
-                        roles: roles,
+                        roles: [ classrole.id, role.id ],
                         displayName: args[0].replace(/^\w/, c => c.toUpperCase()) + ` \`${members.size + 1}\``
                     });
                     const editedContent = signUpRoster(raid, members, raiderRole, params, date, info);
@@ -690,12 +688,12 @@ function startSignUps(raid, members, raiderRole, params, date, info, ref) {
                         const member = raid.guild.members.get(args);
 
                         if (member) {
-                            const isNotRaider = member.roles.has(raiderRole) ? '' : '*';
+                            const isNotRaider = member.roles.includes(raiderRole) ? '' : '*';
 
                             members.delete(member.id);
                             members.set(member.id, {
                                 id: member.id,
-                                roles: member.roles,
+                                roles: Array.from(member.roles.keys()),
                                 displayName: member.displayName + `${isNotRaider} \`${members.size + 1}\``
                             });
                         } else {
