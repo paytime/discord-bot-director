@@ -134,7 +134,7 @@ function fetchRaiderRole(msg, str, params, needsPerm) {
 /**
  * Posts a roster of a raid
  * @param {Discord.Message} msg 
- * @param {Discord.Collection<String, Discord.GuildMember>} members 
+ * @param {Discord.Collection<String, *>} members 
  * @param {*} raiderRole 
  * @param {*} params 
  * @param {Date} date 
@@ -154,8 +154,8 @@ function roster(msg, members, raiderRole, params, date) {
 
     // Find the raid's leader and assists
     const staffRole = params.roles.raiders.list.find(x => x.id === raiderRole).staff;
-    const raidLeader = msg.guild.members.filter(member => member.roles.has(raiderRole) && member.roles.has(staffRole)).array();
-    const raidAssists = msg.guild.members.filter(member => member.roles.has(raiderRole) && member.roles.has(staffRole)).array();
+    const raidLeader = msg.guild.members.filter(member => member.roles.has(raiderRole) && member.roles.has(staffRole) && member.roles.has(params.roles.raiders.leader)).array();
+    const raidAssists = msg.guild.members.filter(member => member.roles.has(raiderRole) && member.roles.has(staffRole) && member.roles.has(params.roles.raiders.assist)).array();
 
     raidAssists.toString = function () {
         return this.join(' ');
@@ -405,7 +405,7 @@ function archiveRaid(raid, autoCollector, absentCollector, manualCollector, admi
 /**
  * Starts the sign up process of the raid
  * @param {Discord.Message} raid 
- * @param {Discord.Collection<String, Discord.GuildMember>} members 
+ * @param {Discord.Collection<String, *>} members 
  * @param {String} raiderRole 
  * @param {*} params 
  * @param {Date} date 
