@@ -153,8 +153,9 @@ function roster(msg, members, raiderRole, params, date) {
     }
 
     // Find the raid's leader and assists
-    const raidLeader = msg.guild.members.filter(member => member.roles.has(raiderRole) && member.roles.has(params.roles.raiders.leader)).array();
-    const raidAssists = msg.guild.members.filter(member => member.roles.has(raiderRole) && member.roles.has(params.roles.raiders.assist)).array();
+    const staffRole = params.roles.raiders.list.find(x => x.id === raiderRole).staff;
+    const raidLeader = msg.guild.members.filter(member => member.roles.has(raiderRole) && member.roles.has(staffRole)).array();
+    const raidAssists = msg.guild.members.filter(member => member.roles.has(raiderRole) && member.roles.has(staffRole)).array();
 
     raidAssists.toString = function () {
         return this.join(' ');
