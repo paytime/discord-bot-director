@@ -26,8 +26,9 @@ module.exports = {
             guild.members.filter(member => member.roles.has(raiderRole)).forEach(m => {
                 const raider = {
                     id: m.id,
+                    displayName: m.displayName,
                     roles: Array.from(m.roles.keys()),
-                    displayName: m.displayName
+                    status: raids.status.ACTIVE
                 }
                 members.set(raider.id, raider);
             });

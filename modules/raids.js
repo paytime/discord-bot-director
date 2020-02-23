@@ -8,6 +8,7 @@ const startmsg = (ref, raiderRole) => {
 };
 
 const autoSignUp = '✅';
+const tentativeSignUp = '✳️';
 const manualSignUp = '#️⃣';
 const cancelSignUp = '❎';
 const adminSignUp = '⚙️';
@@ -16,6 +17,13 @@ const db = require('./db');
 
 const archivedRaid = 'Archived Raid!';
 const defaultInfoText = '*No special information given.*';
+const defaultAbsentText = '*No Absentees!*';
+
+const status = {
+    ACTIVE: 0,
+    TENTATIVE: 1,
+    ABSENT: 2
+}
 
 /**
  * Restarts all still active raids
@@ -75,8 +83,9 @@ function restartRaid(bot, raid, guild, params) {
                 if (member) {
                     members.set(em.id, {
                         id: em.id,
-                        roles: em.roles && em.roles instanceof Array ? em.roles : Array.from(member.roles.keys()),
-                        displayName: em.displayName
+                        displayName: em.displayName,
+                        roles: em.roles,
+                        status: em.status ? em.status : status.ACTIVE
                     });
                 }
             }
@@ -349,37 +358,53 @@ function roster(msg, members, raiderRole, params, date) {
 /**
  * Posts a roster of a raid and adds signup info to it
  * @param {Discord.Message} msg 
- * @param {Discord.Collection<String, Discord.GuildMember>} members 
+ * @param {Discord.Collection<String, *>} members 
  * @param {*} raiderRole 
  * @param {*} params 
  * @param {*} date 
  * @param {String} info 
  */
 function signUpRoster(msg, members, raiderRole, params, date, info) {
-    // Fix sign up order
-    members.forEach(m => {
-        m.displayName = m.displayName.split(' `')[0] + ' `' + (members.array().indexOf(m) + 1) + '`';
+    // Set sign up order
+    let i = 0;
+    members.filter(m => m.status === status.ACTIVE).forEach(m => {
+        i++;
+        m.displayName = m.displayName.split(' `')[0] + ' `' + i + '`';
     });
 
     // Creates a raid window
-    const content = roster(msg, members, raiderRole, params, date);
+    const content = roster(msg, members.filter(m => m.status !== status.ABSENT), raiderRole, params, date);
 
     // Append the info about the sign up emojis
     content.fields.push({
         name: '**💡 Info**',
-        value: info,
+        value: info + "\n\n",
         inline: false
     });
 
+    // Append a list of absentees
+    const absentees = [];
+
+    members.filter(m => m.status === status.ABSENT).forEach(m => {
+        absentees.push(m.displayName);
+    });
+
+    content.fields.push({
+        name: '**💤 Absentees**',
+        value: absentees.length > 0 ? absentees.join(', ') : defaultAbsentText,
+        inline: false
+    });
+
+    // Add the control buttons
     content.fields.push({
         name: empty,
-        value: `**${autoSignUp} - AUTO SIGN UP\n\n${manualSignUp} - MANUAL SIGN UP (For Alts)**`,
+        value: `**${autoSignUp} - AUTO SIGN UP\n\n${manualSignUp} - MANUAL SIGN UP (For Alts)\n\n${adminSignUp} - OPTIONS (Staff only)**`,
         inline: true
     });
 
     content.fields.push({
         name: empty,
-        value: `**${cancelSignUp} - ABSENT\n\n${adminSignUp} - OPTIONS (Staff only)**`,
+        value: `**${tentativeSignUp} - TENTATIVE SIGN UP\n\n${cancelSignUp} - ABSENT**`,
         inline: true
     });
 
@@ -390,13 +415,15 @@ function signUpRoster(msg, members, raiderRole, params, date, info) {
  * Archives the raid
  * @param {*} raid 
  * @param {*} autoCollector 
+ * @param {*} tentativeFilter
  * @param {*} absentCollector 
  * @param {*} manualCollector 
  * @param {*} adminCollector 
  */
-function archiveRaid(raid, autoCollector, absentCollector, manualCollector, adminCollector) {
+function archiveRaid(raid, autoCollector, tentativeFilter, absentCollector, manualCollector, adminCollector) {
     raid.edit(archivedRaid).catch(() => { });
     autoCollector.stop();
+    tentativeFilter.stop();
     absentCollector.stop();
     manualCollector.stop();
     adminCollector.stop();
@@ -425,6 +452,8 @@ function startSignUps(raid, members, raiderRole, params, date, info, ref) {
     // Only members of this raid group will get considered and administrators
     const autoFilter = (react, user) => react.emoji.name === autoSignUp
         && raid.guild.members.filter(member => !member.user.bot && (member.roles.has(raiderRole) || member.hasPermission('ADMINISTRATOR'))).has(user.id);
+    const tentativeFilter = (react, user) => react.emoji.name === tentativeSignUp
+        && raid.guild.members.filter(member => !member.user.bot && (member.roles.has(raiderRole) || member.hasPermission('ADMINISTRATOR'))).has(user.id);
     const manualFilter = (react, user) => react.emoji.name === manualSignUp
         && raid.guild.members.filter(member => !member.user.bot && (member.roles.has(raiderRole) || member.hasPermission('ADMINISTRATOR'))).has(user.id);
     const cancelFilter = (react, user) => react.emoji.name === cancelSignUp
@@ -434,6 +463,7 @@ function startSignUps(raid, members, raiderRole, params, date, info, ref) {
         && raid.guild.members.filter(member => !member.user.bot && (member.roles.has(staffRole) || member.hasPermission('ADMINISTRATOR'))).has(user.id);
 
     const autoCollector = raid.createReactionCollector(autoFilter);
+    const tentativeCollector = raid.createReactionCollector(tentativeFilter);
     const manualCollector = raid.createReactionCollector(manualFilter);
     const absentCollector = raid.createReactionCollector(cancelFilter);
     const adminCollector = raid.createReactionCollector(adminFilter);
@@ -441,63 +471,39 @@ function startSignUps(raid, members, raiderRole, params, date, info, ref) {
     // Listens to all the collected emojis. Users aren't allowed to react to all options, so the previous one will get removed.
     autoCollector.on('collect', react => {
         if ((new Date()).getTime() > date.getTime()) { // Ignore and stop if date passed.
-            archiveRaid(raid, autoCollector, manualCollector, absentCollector, adminCollector);
+            archiveRaid(raid, autoCollector, tentativeCollector, manualCollector, absentCollector, adminCollector);
             return;
         }
 
         const user = react.users.last();
+        autoCollector.collected.first().remove(user.id);
+        addRaidMember(user, raid, members, raiderRole, params, date, info, ref, status.ACTIVE);
+    });
 
-        if (manualCollector.collected.first() && manualCollector.collected.first().users.has(user.id)) {
-            manualCollector.collected.first().remove(user.id);
+    tentativeCollector.on('collect', react => {
+        if ((new Date()).getTime() > date.getTime()) { // Ignore and stop if date passed.
+            archiveRaid(raid, autoCollector, tentativeCollector, manualCollector, absentCollector, adminCollector);
+            return;
         }
 
-        if (absentCollector.collected.first() && absentCollector.collected.first().users.has(user.id)) {
-            absentCollector.collected.first().remove(user.id);
-        }
-
-        // Just update roster
-        const m = raid.guild.members.get(user.id);
-        members.delete(user.id);
-        members.set(user.id, {
-            id: m.id,
-            roles: Array.from(m.roles.keys()),
-            displayName: m.displayName + ` \`${members.size + 1}\``
-        });
-        const editedContent = signUpRoster(raid, members, raiderRole, params, date, info);
-        raid.edit(startmsg(ref, raiderRole), { embed: editedContent });
-
-        // Store the data
-        const entry = JSON.stringify({
-            raid: raid.id,
-            channel: raid.channel.id,
-            guild: raid.guild.id,
-            raiderRole: raiderRole,
-            date: date,
-            info: info,
-            members: members.array()
-        });
-        db.push(raid.client, ref, entry);
+        const user = react.users.last();
+        tentativeCollector.collected.first().remove(user.id);
+        addRaidMember(user, raid, members, raiderRole, params, date, info, ref, status.TENTATIVE);
     });
 
     manualCollector.on('collect', react => {
         if ((new Date()).getTime() > date.getTime()) { // Ignore and stop if date passed.
-            archiveRaid(raid, autoCollector, manualCollector, absentCollector, adminCollector);
+            archiveRaid(raid, autoCollector, tentativeCollector, manualCollector, absentCollector, adminCollector);
             return;
         }
 
         const user = react.users.last();
 
-        if (absentCollector.collected.first() && absentCollector.collected.first().users.has(user.id)) {
-            absentCollector.collected.first().remove(user.id);
-        }
-
-        if (autoCollector.collected.first() && autoCollector.collected.first().users.has(user.id)) {
-            autoCollector.collected.first().remove(user.id);
-        }
+        manualCollector.collected.first().remove(user.id);
 
         // If the user has chosen the manual sign up, he/she will receive a DM asking what his name, class and role is. This will be then added to the raid list
         user.createDM().then(dm => {
-            dm.send('**You have chosen to manually sign up for the raid.** Please tell me your ingame name, your class and your role (Tank or Healer) if you are not DPS.\nExample: `Paytime Druid Healer` or `Poortime Mage`');
+            dm.send('**You have chosen to manually sign up for the raid.**\n\nPlease tell me your ingame name, your class and your role (Tank or Healer) if you are not DPS. If you are not completely sure whether you can attend the raid or you might be late, then add a `*` to your name to indicate a tentative sign up!\nExample: `Paytime Druid Healer` or `Poortime* Mage`!');
 
             const filter = m => m.content.trim().length > 5 && m.content.trim().length < 50 && (m.content.trim().split(' ').length === 2 || m.content.trim().split(' ').length === 3);
             const messageCollector = dm.createMessageCollector(filter, { time: 120000 });
@@ -541,8 +547,17 @@ function startSignUps(raid, members, raiderRole, params, date, info, ref) {
                         break;
                 }
 
+                let name = args[0];
+                let isTentative = false;
+
+                // Check whether this is a tentative sign up
+                if (name.endsWith('*')) {
+                    name = name.replace('*', '');
+                    isTentative = true;
+                }
+
                 // Check if the player's name is not too long or too short
-                if (args[0].length > 12 && args[0].length < 2) {
+                if (name.length > 12 && name.length < 2) {
                     isOk = false;
                 }
 
@@ -551,11 +566,14 @@ function startSignUps(raid, members, raiderRole, params, date, info, ref) {
                 }
 
                 if (isOk) {
+                    name = name.replace(/^\w/, c => c.toUpperCase());
+
                     members.delete(user.id);
                     members.set(user.id, {
                         id: user.id,
-                        roles: [ classrole.id, role.id ],
-                        displayName: args[0].replace(/^\w/, c => c.toUpperCase()) + ` \`${members.size + 1}\``
+                        displayName: isTentative ? name + ` \`*\`` : name + ` \`${members.filter(x => x.status === status.ACTIVE).size + 1}\``,
+                        roles: [classrole.id, role.id],
+                        status: isTentative ? status.TENTATIVE : status.ACTIVE
                     });
                     const editedContent = signUpRoster(raid, members, raiderRole, params, date, info);
                     raid.edit(startmsg(ref, raiderRole), { embed: editedContent });
@@ -564,16 +582,7 @@ function startSignUps(raid, members, raiderRole, params, date, info, ref) {
                     dm.send('👌');
 
                     // Store the data
-                    const entry = JSON.stringify({
-                        raid: raid.id,
-                        channel: raid.channel.id,
-                        guild: raid.guild.id,
-                        raiderRole: raiderRole,
-                        date: date,
-                        info: info,
-                        members: members.array()
-                    });
-                    db.push(raid.client, ref, entry);
+                    storeSignUpData(raid, raiderRole, date, info, members, ref);
                 } else {
                     dm.send('The input is invalid. Try again!');
                 }
@@ -583,38 +592,13 @@ function startSignUps(raid, members, raiderRole, params, date, info, ref) {
 
     absentCollector.on('collect', react => {
         if ((new Date()).getTime() > date.getTime()) { // Ignore and stop if date passed.
-            archiveRaid(raid, autoCollector, manualCollector, absentCollector, adminCollector);
+            archiveRaid(raid, autoCollector, tentativeCollector, manualCollector, absentCollector, adminCollector);
             return;
         }
 
         const user = react.users.last();
-
-        if (manualCollector.collected.first() && manualCollector.collected.first().users.has(user.id)) {
-            manualCollector.collected.first().remove(user.id);
-        }
-
-        if (autoCollector.collected.first() && autoCollector.collected.first().users.has(user.id)) {
-            autoCollector.collected.first().remove(user.id);
-        }
-
-        // Remove user from roster and edit content
-        const res = members.delete(user.id);
-        if (res) {
-            const editedContent = signUpRoster(raid, members, raiderRole, params, date, info);
-            raid.edit(startmsg(ref, raiderRole), { embed: editedContent });
-
-            // Store the data
-            const entry = JSON.stringify({
-                raid: raid.id,
-                channel: raid.channel.id,
-                guild: raid.guild.id,
-                raiderRole: raiderRole,
-                date: date,
-                info: info,
-                members: members.array()
-            });
-            db.push(raid.client, ref, entry);
-        }
+        absentCollector.collected.first().remove(user.id);
+        addRaidMember(user, raid, members, raiderRole, params, date, info, ref, status.ABSENT);
     });
 
     adminCollector.on('collect', react => {
@@ -672,6 +656,7 @@ function startSignUps(raid, members, raiderRole, params, date, info, ref) {
                             err = "Not a valid number. Try again!"
                         }
 
+                        //TODO: Fix removal due to tentative sign ups
                         const res = members.array()[parseInt(args) - 1];
 
                         if (res) {
@@ -688,13 +673,12 @@ function startSignUps(raid, members, raiderRole, params, date, info, ref) {
                         const member = raid.guild.members.get(args);
 
                         if (member) {
-                            const isNotRaider = member.roles.includes(raiderRole) ? '' : '*';
-
                             members.delete(member.id);
                             members.set(member.id, {
                                 id: member.id,
+                                displayName: member.displayName + ` \`x\``,
                                 roles: Array.from(member.roles.keys()),
-                                displayName: member.displayName + `${isNotRaider} \`${members.size + 1}\``
+                                status: status.ACTIVE
                             });
                         } else {
                             err = "Could not find member!";
@@ -716,22 +700,72 @@ function startSignUps(raid, members, raiderRole, params, date, info, ref) {
                     raid.edit(startmsg(ref, raiderRole), { embed: signUpRoster(raid, members, raiderRole, params, date, info) });
 
                     // Store the data
-                    const entry = JSON.stringify({
-                        raid: raid.id,
-                        channel: raid.channel.id,
-                        guild: raid.guild.id,
-                        raiderRole: raiderRole,
-                        date: date,
-                        info: info,
-                        members: members.array()
-                    });
-                    db.push(raid.client, ref, entry);
+                    storeSignUpData(raid, raiderRole, date, info, members, ref);
                 } else {
                     dm.send(err);
                 }
             });
         });
     });
+}
+
+/**
+ * Add a raid member to the member's list
+ * @param {Discord.User} user 
+ * @param {Discord.Message} raid 
+ * @param {Discord.Collection<String, *>} members 
+ * @param {String} raiderRole 
+ * @param {*} params 
+ * @param {Date} date 
+ * @param {Info} info 
+ * @param {String} ref 
+ * @param {*} signUpStatus 
+ */
+function addRaidMember(user, raid, members, raiderRole, params, date, info, ref, signUpStatus) {
+    const m = raid.guild.members.get(user.id);
+    members.delete(user.id);
+
+    let dn = m.displayName;
+
+    if (signUpStatus === status.ACTIVE) {
+        dn += ` \`x\``;
+    } else if (signUpStatus === status.TENTATIVE) {
+        dn += ` \`*\``;
+    }
+
+    members.set(user.id, {
+        id: m.id,
+        displayName: dn,
+        roles: Array.from(m.roles.keys()),
+        status: signUpStatus
+    });
+    const editedContent = signUpRoster(raid, members, raiderRole, params, date, info);
+    raid.edit(startmsg(ref, raiderRole), { embed: editedContent });
+
+    // Store the data
+    storeSignUpData(raid, raiderRole, date, info, members, ref);
+}
+
+/**
+ * Store a member entry in the database
+ * @param {Discord.Message} raid 
+ * @param {String} raiderRole 
+ * @param {Date} date 
+ * @param {String} info 
+ * @param {Discord.Collection<String, *>} members 
+ * @param {String} ref 
+ */
+function storeSignUpData(raid, raiderRole, date, info, members, ref) {
+    const entry = JSON.stringify({
+        raid: raid.id,
+        channel: raid.channel.id,
+        guild: raid.guild.id,
+        raiderRole: raiderRole,
+        date: date,
+        info: info,
+        members: members.array()
+    });
+    db.push(raid.client, ref, entry);
 }
 
 /**
@@ -814,6 +848,7 @@ function createRaidEvent(msg, raiderRole, params, date) {
                 raid.edit(startmsg(ref, raiderRole), { embed: content })
                     .then(async function () {
                         await raid.react(autoSignUp);
+                        await raid.react(tentativeSignUp);
                         await raid.react(manualSignUp);
                         await raid.react(cancelSignUp);
                         await raid.react(adminSignUp);
@@ -825,7 +860,9 @@ function createRaidEvent(msg, raiderRole, params, date) {
 
 module.exports = {
     empty: empty,
+    status: status,
     autoSignUp: autoSignUp,
+    tentativeSignUp: tentativeSignUp,
     manualSignUp: manualSignUp,
     cancelSignUp: cancelSignUp,
     startmsg: startmsg,
