@@ -603,7 +603,7 @@ function startSignUps(raid, members, raiderRole, params, date, info, ref) {
 
     adminCollector.on('collect', react => {
         if ((new Date()).getTime() > date.getTime()) { // Ignore and stop if date passed.
-            archiveRaid(raid, autoCollector, manualCollector, absentCollector, adminCollector);
+            archiveRaid(raid, autoCollector, tentativeCollector, manualCollector, absentCollector, adminCollector);
             return;
         }
 
