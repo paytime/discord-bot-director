@@ -368,8 +368,12 @@ function signUpRoster(msg, members, raiderRole, params, date, info) {
     // Set sign up order
     let i = 0;
     members.filter(m => m.status === status.ACTIVE).forEach(m => {
-        i++;
-        m.displayName = m.displayName.split(' `')[0] + ' `' + i + '`';
+        if (!m || !m.id || !m.displayName) {
+            members.delete(m.id);
+        } else {
+            i++;
+            m.displayName = m.displayName.split(' `')[0] + ' `' + i + '`';
+        }   
     });
 
     // Creates a raid window
