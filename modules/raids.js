@@ -373,7 +373,7 @@ function signUpRoster(msg, members, raiderRole, params, date, info) {
         } else {
             i++;
             m.displayName = m.displayName.split(' `')[0] + ' `' + i + '`';
-        }   
+        }
     });
 
     // Creates a raid window
@@ -425,13 +425,15 @@ function signUpRoster(msg, members, raiderRole, params, date, info) {
  * @param {*} adminCollector 
  */
 function archiveRaid(raid, autoCollector, tentativeFilter, absentCollector, manualCollector, adminCollector) {
-    raid.edit(archivedRaid).catch(() => { });
-    autoCollector.stop();
-    tentativeFilter.stop();
-    absentCollector.stop();
-    manualCollector.stop();
-    adminCollector.stop();
-    raid.clearReactions().catch(() => { });
+    try {
+        raid.edit(archivedRaid).catch(() => { });
+        autoCollector.stop();
+        tentativeFilter.stop();
+        absentCollector.stop();
+        manualCollector.stop();
+        adminCollector.stop();
+        raid.clearReactions().catch(() => { });
+    } catch { }
 }
 
 /**

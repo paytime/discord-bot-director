@@ -12,6 +12,9 @@ module.exports = {
      * @param {*} params 
      */
     execute(msg, args, params) {
+        // First, delete the message
+        msg.delete();
+
         if (!args || args.length < 2 || !args[0] || !args[1]) {
             throw new Error('Wrong input. Check the description with `@bot ?raid`');
         }
