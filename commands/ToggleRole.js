@@ -74,7 +74,7 @@ module.exports = {
             return player.roles.has(entry.id);
         });
 
-        const isRoleSet = params.roles.roles.list.forEach(entry => {
+        const isRoleSet = params.roles.roles.list.some(entry => {
             return player.roles.has(entry.id);
         });
 
