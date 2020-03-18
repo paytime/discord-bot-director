@@ -69,6 +69,19 @@ module.exports = {
             });
         }
 
+        // Also check if the player has an assigned class and ingame-role
+        const isClassSet = params.roles.classes.list.some(entry => {
+            return player.roles.has(entry.id);
+        });
+
+        const isRoleSet = params.roles.roles.list.forEach(entry => {
+            return player.roles.has(entry.id);
+        });
+
+        if (!isClassSet || !isRoleSet) {
+            throw new Error(`Member doesn't have a class and/or ingame role set.`);
+        }
+
         // Finally, toggle the player's role
         if (hasPermission) {
             if (player.roles.has(roleId)) {
