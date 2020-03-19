@@ -25,6 +25,8 @@ const status = {
     ABSENT: 2
 }
 
+let dmChats = [];
+
 /**
  * Restarts all still active raids
  * @param {Discord.Client} bot 
@@ -509,12 +511,17 @@ function startSignUps(raid, members, raiderRole, params, date, info, ref) {
 
         // If the user has chosen the manual sign up, he/she will receive a DM asking what his name, class and role is. This will be then added to the raid list
         user.createDM().then(dm => {
+            clearDMChats(user);
             dm.send('**You have chosen to manually sign up for the raid.**\n\nPlease tell me your ingame name, your class and your role (Tank or Healer) if you are not DPS. If you are not completely sure whether you can attend the raid or you might be late, then add a `*` to your name to indicate a tentative sign up!\nExample: `Paytime Druid Healer` or `Poortime* Mage`!');
 
             const filter = m => m.content.trim().length > 5 && m.content.trim().length < 50 && (m.content.trim().split(' ').length === 2 || m.content.trim().split(' ').length === 3);
-            const messageCollector = dm.createMessageCollector(filter, { time: 120000 });
+            
+            dmChats.push({
+                user: user,
+                collector: dm.createMessageCollector(filter, { time: 120000 })
+            });
 
-            messageCollector.on('collect', m => {
+            dmChats[dmChats.length - 1].collector.on('collect', m => {
                 let isOk = true;
                 const args = m.content.trim().toLowerCase().split(' ');
 
@@ -584,7 +591,7 @@ function startSignUps(raid, members, raiderRole, params, date, info, ref) {
                     const editedContent = signUpRoster(raid, members, raiderRole, params, date, info);
                     raid.edit(startmsg(ref, raiderRole), { embed: editedContent });
 
-                    messageCollector.stop();
+                    clearDMChats(user);
                     dm.send('👌');
 
                     // Store the data
@@ -620,25 +627,45 @@ function startSignUps(raid, members, raiderRole, params, date, info, ref) {
 
         // User will receive a direct message and will be instructed on what options they can change
         user.createDM().then(dm => {
+            clearDMChats(user);
             const maxLen = 400;
 
-            dm.send(`**RAID \`${ref}\` OPTIONS**\n\nCommands:\n🡆 \`date dd-mm-yyyy/HH:MM\` - Changes the raid's schedule (in CET/CEST). Example: \`date 20-05-2020/15:00\`\n🡆 \`info YOUR_MESSAGE\` - Changes the info text. Max. length: ${maxLen} characters\n🡆 \`remove NUM\` - Removes a user from the sign up list. NUM is the user's sign up order.\n🡆 \`add ID\` - Adds or updates a member. ID is the player's discord ID, which you can retrieve by right clicking on their name and selecting 'Copy ID'.\n🡆 \`cancel\` - Cancel this operation.`);
+            dm.send(`**RAID \`${ref}\` OPTIONS**\n\nCommands:\n🡆 \`list\` - Posts an unformatted list of players with their sign up order.\n🡆 \`date dd-mm-yyyy/HH:MM\` - Changes the raid's schedule (in CET/CEST). Example: \`date 20-05-2020/15:00\`\n🡆 \`info YOUR_MESSAGE\` - Changes the info text. Max. length: ${maxLen} characters\n🡆 \`remove NUM\` - Removes a user from the sign up list. NUM is the user's sign up order.\n🡆 \`add ID\` - Adds or updates a member. ID is the player's discord ID, which you can retrieve by right clicking on their name and selecting 'Copy ID'.\n🡆 \`cancel\` - Cancel this operation.`);
 
-            const filter = m => m.content.trim().length >= 4 && m.content.trim().length <= maxLen + 10 && (m.content.trim().toLowerCase().startsWith('date') ||
+            const filter = m => m.content.trim().length >= 4 && m.content.trim().length <= maxLen + 10 && (
+                m.content.trim().toLowerCase().startsWith('list') ||
+                m.content.trim().toLowerCase().startsWith('date') ||
                 m.content.trim().toLowerCase().startsWith('info') ||
                 m.content.trim().toLowerCase().startsWith('remove') ||
                 m.content.trim().toLowerCase().startsWith('add') ||
                 m.content.trim().toLowerCase().startsWith('cancel'));
-            const messageCollector = dm.createMessageCollector(filter, { time: 300000 });
 
-            messageCollector.on('collect', m => {
+            dmChats.push({
+                user: user,
+                collector: dm.createMessageCollector(filter, { time: 300000 })
+            });
+
+            dmChats[dmChats.length - 1].collector.on('collect', m => {
                 let err;
 
                 let arr = m.content.trim().split(' ');
                 const command = arr.shift().toLowerCase();
                 const args = arr.join(' ').trim();
 
+                const list = [];
+                const orderedList = members.filter(m => m.status === status.ACTIVE).concat(members.filter(m => m.status === status.TENTATIVE));
+                orderedList.forEach(m => {
+                    list.push(memberToString(m, params, list.length + 1));
+                });
+
                 switch (command) {
+                    case 'list':
+                        dm.send(list.join('\n'), {
+                            split: {
+                                char: '\n'
+                            }
+                        }).catch((e) => { err = e; });
+                        break;
                     case 'date':
                         try {
                             date = getdate(args);
@@ -662,8 +689,7 @@ function startSignUps(raid, members, raiderRole, params, date, info, ref) {
                             err = "Not a valid number. Try again!"
                         }
 
-                        //TODO: Fix removal due to tentative sign ups
-                        const res = members.array()[parseInt(args) - 1];
+                        const res = orderedList.array()[parseInt(args) - 1];
 
                         if (res) {
                             members.delete(res.id);
@@ -692,7 +718,7 @@ function startSignUps(raid, members, raiderRole, params, date, info, ref) {
 
                         break;
                     case 'cancel':
-                        messageCollector.stop();
+                        clearDMChats(user);
                         err = "Cancelled! 👌";
                         break;
                     default:
@@ -701,7 +727,6 @@ function startSignUps(raid, members, raiderRole, params, date, info, ref) {
                 }
 
                 if (!err) {
-                    messageCollector.stop();
                     dm.send('👌');
                     raid.edit(startmsg(ref, raiderRole), { embed: signUpRoster(raid, members, raiderRole, params, date, info) });
 
@@ -862,6 +887,50 @@ function createRaidEvent(msg, raiderRole, params, date) {
                     .then(startSignUps(raid, new Discord.Collection(), raiderRole, params, date, defaultInfoText, ref));
             });
         });
+}
+
+/**
+ * Returns a member of a raid event as a string
+ * @param {*} m 
+ * @param {*} params
+ * @param {*} i
+ */
+function memberToString(m, params, i) {
+    const help = m.displayName.substring(0, m.displayName.length - 1).split(' `');
+    const displayName = `**${help[0]}**`;
+    const order = help[1] === '*' ? `* (${i})` : help[1];
+
+    let myClass;
+    params.roles.classes.list.some(entry => {
+        if (m.roles.includes(entry.id)) {
+            myClass = entry.emoji.toUpperCase();
+            return true;
+        }
+        return false;
+    });
+
+    let role;
+    params.roles.roles.list.some(entry => {
+        if (m.roles.includes(entry.id)) {
+            role = entry.emoji.toUpperCase();
+            return true;
+        }
+        return false;
+    });
+
+    return `${order} ${displayName} ${myClass} ${role}`;
+}
+
+/**
+ * Stops all messages collectors of a user.
+ * @param {Discord.User} user 
+ */
+function clearDMChats(user) {
+    dmChats.filter(d => d.user === user).forEach(d => {
+        d.collector.stop();
+    });
+
+    dmChats = dmChats.filter(d => d.user !== user);
 }
 
 module.exports = {
