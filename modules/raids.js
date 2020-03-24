@@ -630,7 +630,7 @@ function startSignUps(raid, members, raiderRole, params, date, info, ref) {
             clearDMChats(user);
             const maxLen = 400;
 
-            dm.send(`**RAID \`${ref}\` OPTIONS**\n\nCommands:\n🡆 \`list\` - Posts an unformatted list of players with their sign up order.\n🡆 \`date dd-mm-yyyy/HH:MM\` - Changes the raid's schedule (in CET/CEST). Example: \`date 20-05-2020/15:00\`\n🡆 \`info YOUR_MESSAGE\` - Changes the info text. Max. length: ${maxLen} characters\n🡆 \`remove NUM\` - Removes a user from the sign up list. NUM is the user's sign up order.\n🡆 \`add ID\` - Adds or updates a member. ID is the player's discord ID, which you can retrieve by right clicking on their name and selecting 'Copy ID'.\n🡆 \`cancel\` - Cancel this operation.`);
+            dm.send(`**RAID \`${ref}\` OPTIONS**\n\nCommands:\n🡆 \`list\` - Posts an unformatted list of players with their sign up order.\n🡆 \`date dd-mm-yyyy/HH:MM\` - Changes the raid's schedule (in CET/CEST). Example: \`date 20-05-2020/15:00\`\n🡆 \`info YOUR_MESSAGE\` - Changes the info text. Max. length: ${maxLen} characters\n🡆 \`remove NUM\` - Removes a user from the sign up list. NUM is the user's sign up order.\n🡆 \`add ID\` - Adds or updates a member. ID is the player's discord ID, which you can retrieve by right clicking on their name and selecting 'Copy ID'.\n🡆 \`archive\` - Stops and archives the raid event. **THE RAID CANNOT BE RESTARTED!**\n🡆 \`cancel\` - Cancel this operation.`);
 
             const filter = m => m.content.trim().length >= 4 && m.content.trim().length <= maxLen + 10 && (
                 m.content.trim().toLowerCase().startsWith('list') ||
@@ -638,6 +638,7 @@ function startSignUps(raid, members, raiderRole, params, date, info, ref) {
                 m.content.trim().toLowerCase().startsWith('info') ||
                 m.content.trim().toLowerCase().startsWith('remove') ||
                 m.content.trim().toLowerCase().startsWith('add') ||
+                m.content.trim().toLowerCase().startsWith('archive') ||
                 m.content.trim().toLowerCase().startsWith('cancel'));
 
             dmChats.push({
@@ -716,6 +717,11 @@ function startSignUps(raid, members, raiderRole, params, date, info, ref) {
                             err = "Could not find member!";
                         }
 
+                        break;
+                    case '':
+                        archiveRaid(raid, autoCollector, tentativeCollector, manualCollector, absentCollector, adminCollector);
+                        clearDMChats(user);
+                        err = "Raid archived! 👌";
                         break;
                     case 'cancel':
                         clearDMChats(user);
