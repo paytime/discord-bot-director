@@ -718,7 +718,7 @@ function startSignUps(raid, members, raiderRole, params, date, info, ref) {
                         }
 
                         break;
-                    case '':
+                    case 'archive':
                         archiveRaid(raid, autoCollector, tentativeCollector, manualCollector, absentCollector, adminCollector);
                         clearDMChats(user);
                         err = "Raid archived! 👌";
