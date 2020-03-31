@@ -24,9 +24,9 @@ module.exports = {
         }
 
         const ref = args[0].trim();
-        const i = 0;
+        let i = 0;
 
-        db.pull(msg.client, ref, entry => {
+        db.pull(msg.client, ref, (entry) => {
             if (i > 0) return;
 
             //Create the file with its content
@@ -42,8 +42,8 @@ module.exports = {
                 msg.reply(`Retrieved data from '**${ref}**'!`, {
                     files: [path]
                 }).then(() => { // Finally remove the file again
-                    i++;
                     fs.unlink(path, err => {
+                        i++;
                         if (err) console.error('Could not remove file.\n' + err);
                     });
                 }).catch((err) => {
