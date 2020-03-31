@@ -115,7 +115,7 @@ function retrieveData(bot, ref, result) {
         const chunkIds = msg.embeds[0].description.split('\n');
 
         for (let i = 0; i < chunkIds.length; i++) {
-            const chunkId = chunksId[i];
+            const chunkId = chunkIds[i];
 
             c.fetchMessage(chunkId).then(chunk => {
                 chunks.push(chunk.content);
