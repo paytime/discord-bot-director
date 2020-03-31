@@ -19,7 +19,7 @@ module.exports = {
         }
 
         // Second, check if the argument is valid
-        if (!args || args.length < 1 || !args[0] || !isNaN(args[0]) || args[0].length > 20) {
+        if (!args || args.length < 1 || !args[0] || !parseInt(args[0]) || args[0].length > 50) {
             throw new Error('Invalid ID.');
         }
 
