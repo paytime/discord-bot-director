@@ -4,5 +4,6 @@ module.exports = {
     ToggleRole: require('./ToggleRole'),
     ExportList: require('./ExportList'),
     Roster: require('./Roster'),
-    Raid: require('./Raid')
+    Raid: require('./Raid'),
+    DBFetch: require('./DBFetch')
 };
