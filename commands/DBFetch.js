@@ -24,23 +24,30 @@ module.exports = {
         }
 
         const ref = args[0].trim();
+        const i = 0;
 
         db.pull(msg.client, ref, entry => {
+            if (i > 0) return;
+            i++;
+            
             //Create the file with its content
             const path = `./${ref}.json`;
 
             fs.writeFile(path, JSON.stringify(entry), err => {
-                if (err) throw new Error('Could not create or write to file.\n' + err);
+                if (err) {
+                    console.error('Could not create or write to file.\n' + err);
+                    return;
+                }
     
                 // Write a reply message and attach the file
                 msg.reply(`Retrieved data from '**${ref}**'!`, {
                     files: [path]
                 }).then(() => { // Finally remove the file again
                     fs.unlink(path, err => {
-                        if (err) throw new Error('Could not remove file.\n' + err);
+                        if (err) console.error('Could not remove file.\n' + err);
                     });
                 }).catch((err) => {
-                    throw new Error('Could not find or open file.\n' + err);
+                    console.error('Could not find or open file.\n' + err);
                 });
             });
         });
