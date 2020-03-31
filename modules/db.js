@@ -3,7 +3,8 @@
 const Discord = require('discord.js');
 const Buffer = require('buffer/').Buffer;
 
-const dbchannelId = process.env.DBCHANNELID;
+const keysChannelId = process.env.KEYSCHANNELID;
+const valuesChannelId = process.env.VALUESCHANNELID;
 const serverId = process.env.SERVERID;
 
 const wip = 'Working...';
@@ -17,7 +18,9 @@ const splitChar = '*';
  * @param {*} result 
  */
 function storeData(bot, data, result) {
-    const c = checkValidChannel(bot);
+    const c = checkValidChannels(bot);
+    const keysChannel = c[0];
+    const valuesChannel = c[1];
 
     // Encode the data
     let base64 = Buffer.from(data, 'utf8').toString('base64');
@@ -26,14 +29,14 @@ function storeData(bot, data, result) {
         base64 = addSplitChars(base64, 1940);
     }
 
-    c.send({
+    keysChannel.send({
         embed: {
             title: wip,
             description: wip
         }
     }).then(msg => {
         // The data will be split up if too big. The references to the chunks will then be stored in the original message
-        c.send(base64, {
+        valuesChannel.send(base64, {
             split: {
                 char: splitChar
             }
@@ -64,7 +67,9 @@ function storeData(bot, data, result) {
  * @param {String} data 
  */
 function updateData(bot, ref, data) {
-    const c = checkValidChannel(bot);
+    const c = checkValidChannels(bot);
+    const keysChannel = c[0];
+    const valuesChannel = c[1];
 
     // Encode the data
     let base64 = Buffer.from(data, 'utf8').toString('base64');
@@ -73,10 +78,10 @@ function updateData(bot, ref, data) {
         base64 = addSplitChars(base64, 1940);
     }
 
-    c.fetchMessage(ref).then(msg => {
+    keysChannel.fetchMessage(ref).then(msg => {
         const oldRefs = msg.embeds[0].description.split('\n');
 
-        c.send(base64, {
+        valuesChannel.send(base64, {
             split: {
                 char: splitChar
             }
@@ -88,7 +93,7 @@ function updateData(bot, ref, data) {
                 }
             }).then(() => {
                 // Delete old chunks
-                c.bulkDelete(oldRefs).catch(() => {}); // Ignore missing errors
+                valuesChannel.bulkDelete(oldRefs).catch(() => { }); // Ignore missing errors
             }).catch(err => {
                 console.error('Could not update reference holder: ' + err);
             });
@@ -107,17 +112,19 @@ function updateData(bot, ref, data) {
  * @param {*} result 
  */
 function retrieveData(bot, ref, result) {
-    const c = checkValidChannel(bot);
+    const c = checkValidChannels(bot);
+    const keysChannel = c[0];
+    const valuesChannel = c[1];
     const chunks = [];
 
-    c.fetchMessage(ref).then(msg => {
+    keysChannel.fetchMessage(ref).then(msg => {
         // First collect all encoded chunks
         const chunkIds = msg.embeds[0].description.split('\n');
 
         for (let i = 0; i < chunkIds.length; i++) {
             const chunkId = chunkIds[i];
 
-            c.fetchMessage(chunkId).then(chunk => {
+            valuesChannel.fetchMessage(chunkId).then(chunk => {
                 chunks.push(chunk.content);
             }).then(() => {
                 if (i !== chunkIds.length - 1) return;
@@ -126,7 +133,7 @@ function retrieveData(bot, ref, result) {
                 try {
                     const parsed = JSON.parse(data);
                     result(parsed);
-                } catch {}
+                } catch { }
             }).catch(err => {
                 console.error('Could not find chunk message of id ' + chunkId + ': ' + err);
             });
@@ -137,22 +144,27 @@ function retrieveData(bot, ref, result) {
 }
 
 /**
- * Checks if the dbchannel exists and returns it.
+ * Checks if the database channels exist and returns them.
  * @param {Discord.Client} bot 
- * @returns {Discord.TextChannel}
+ * @returns {Array<Discord.TextChannel>}
  */
-function checkValidChannel(bot) {
+function checkValidChannels(bot) {
     const guild = bot.guilds.get(serverId);
     if (!guild) {
         throw new Error('Guild does not exist.');
     }
 
-    const channel = guild.channels.get(dbchannelId);
-    if (!channel) {
-        throw new Error('Channel does not exist.');
+    const keysChannel = guild.channels.get(keysChannelId);
+    if (!keysChannel) {
+        throw new Error('Keys-Channel does not exist.');
     }
 
-    return channel;
+    const valuesChannel = guild.channels.get(valuesChannelId);
+    if (!valuesChannel) {
+        throw new Error('Values-Channel does not exist.');
+    }
+
+    return [keysChannel, valuesChannel];
 }
 
 /**
@@ -191,7 +203,6 @@ function addSplitChars(str, n) {
 }
 
 module.exports = {
-    channelId: dbchannelId,
     commit: storeData,
     push: updateData,
     pull: retrieveData

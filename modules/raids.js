@@ -15,7 +15,7 @@ const adminSignUp = '⚙️';
 
 const db = require('./db');
 
-const archivedRaid = 'Archived Raid!';
+const archivedRaid = 'Archived Raid';
 const defaultInfoText = '*No special information given.*';
 const defaultAbsentText = '*No Absentees!*';
 
@@ -75,7 +75,7 @@ function restartRaids(bot, params) {
 function restartRaid(bot, raid, guild, params) {
     if (raid.author === bot.user && raid.content.startsWith('ID:')) {
         const ref = raid.content.split('-')[0].trim().slice(4);
-        db.pull(bot, ref, (entry) => {
+        db.pull(bot, ref, entry => {
             console.info(`Restarting raid '${ref}'`);
 
             const members = new Discord.Collection();
@@ -428,7 +428,7 @@ function signUpRoster(msg, members, raiderRole, params, date, info) {
  */
 function archiveRaid(raid, autoCollector, tentativeFilter, absentCollector, manualCollector, adminCollector) {
     try {
-        raid.edit(`${archiveRaid} - ${raid.content}`).catch(() => { });
+        raid.edit(`${archivedRaid} - ${raid.content}`).catch(() => { });
         autoCollector.stop();
         tentativeFilter.stop();
         absentCollector.stop();
@@ -515,7 +515,7 @@ function startSignUps(raid, members, raiderRole, params, date, info, ref) {
             dm.send('**You have chosen to manually sign up for the raid.**\n\nPlease tell me your ingame name, your class and your role (Tank or Healer) if you are not DPS. If you are not completely sure whether you can attend the raid or you might be late, then add a `*` to your name to indicate a tentative sign up!\nExample: `Paytime Druid Healer` or `Poortime* Mage`!');
 
             const filter = m => m.content.trim().length > 5 && m.content.trim().length < 50 && (m.content.trim().split(' ').length === 2 || m.content.trim().split(' ').length === 3);
-            
+
             dmChats.push({
                 user: user,
                 collector: dm.createMessageCollector(filter, { time: 120000 })
