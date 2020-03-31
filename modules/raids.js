@@ -419,7 +419,7 @@ function signUpRoster(msg, members, raiderRole, params, date, info) {
 
 /**
  * Archives the raid
- * @param {*} raid 
+ * @param {Discord.Message} raid 
  * @param {*} autoCollector 
  * @param {*} tentativeFilter
  * @param {*} absentCollector 
@@ -428,7 +428,7 @@ function signUpRoster(msg, members, raiderRole, params, date, info) {
  */
 function archiveRaid(raid, autoCollector, tentativeFilter, absentCollector, manualCollector, adminCollector) {
     try {
-        raid.edit(archivedRaid).catch(() => { });
+        raid.edit(`${archiveRaid} - ${raid.content}`).catch(() => { });
         autoCollector.stop();
         tentativeFilter.stop();
         absentCollector.stop();

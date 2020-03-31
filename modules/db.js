@@ -112,19 +112,25 @@ function retrieveData(bot, ref, result) {
 
     c.fetchMessage(ref).then(msg => {
         // First collect all encoded chunks
-        msg.embeds[0].description.split('\n').forEach(chunkId => {
+        const chunkIds = msg.embeds[0].description.split('\n');
+
+        for (let i = 0; i < chunkIds.length; i++) {
+            const chunkId = chunksId[i];
+
             c.fetchMessage(chunkId).then(chunk => {
                 chunks.push(chunk.content);
             }).then(() => {
+                if (i !== chunkIds.length - 1) return;
+
                 const data = Buffer.from(chunks.join('').replace(splitChar, ''), 'base64').toString('utf8');
-                try{
+                try {
                     const parsed = JSON.parse(data);
                     result(parsed);
-                } catch {} // Do nothing when the JSON cannot be parsed yet.     
+                } catch {}
             }).catch(err => {
                 console.error('Could not find chunk message of id ' + chunkId + ': ' + err);
             });
-        });
+        }
     }).catch(err => {
         console.error('Could not find data: ' + err);
     });
