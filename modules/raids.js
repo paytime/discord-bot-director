@@ -200,8 +200,25 @@ function roster(msg, members, raiderRole, params, date) {
     };
 
     const sort = function (a, b) {
-        if (a.displayName > b.displayName) return 1;
-        else if (b.displayName > a.displayName) return -1;
+        let an = a.displayName;
+        let bn = b.displayName;
+
+        const asplit = an.split(' `')
+        let anum = asplit[1];
+        if (anum) {
+            anum = anum.replace('`', '').replace('*', '');
+            an = anum + asplit[0];
+        }
+
+        const bsplit = bn.split(' `')
+        let bnum = bsplit[1];
+        if (bnum) {
+            bnum = bnum.replace('`', '').replace('*', '');
+            bn = bnum + bsplit[0];
+        }
+
+        if (an > bn) return 1;
+        else if (bn > an) return -1;
         return 0;
     }
 
