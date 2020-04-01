@@ -207,6 +207,7 @@ function roster(msg, members, raiderRole, params, date) {
         let anum = asplit[1];
         if (anum) {
             anum = anum.replace('`', '').replace('*', '');
+            if (anum.length === 1) anum = '0' + anum;
             an = anum + asplit[0];
         }
 
@@ -214,6 +215,7 @@ function roster(msg, members, raiderRole, params, date) {
         let bnum = bsplit[1];
         if (bnum) {
             bnum = bnum.replace('`', '').replace('*', '');
+            if (bnum.length === 1) bnum = '0' + bnum;
             bn = bnum + bsplit[0];
         }
 
